@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "types": [
+            "node"
+        ],
+        "noUnusedLocals": true
+    },
+    "typeAcquisition": {
+        "enable": true
+    }
+}

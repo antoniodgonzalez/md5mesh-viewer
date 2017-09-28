@@ -1,0 +1,16 @@
+precision mediump float;
+
+uniform mat4 u_worldMatrix;
+uniform mat4 u_viewMatrix;
+uniform mat4 u_projMatrix;
+
+attribute vec3 position;
+attribute vec2 texCoord;
+
+varying vec2 v_texCoord;
+
+void main() {
+    vec4 position = u_viewMatrix * u_worldMatrix * vec4(position, 1.0);
+    gl_Position = u_projMatrix * position;
+    v_texCoord = texCoord;
+}

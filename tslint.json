@@ -1,0 +1,11 @@
+{
+    "extends": "tslint:recommended",
+    "rules": {
+        "ordered-imports": false,
+        "trailing-comma": false,
+        "object-literal-sort-keys": false,
+        "interface-name": false,
+        "arrow-parens": false,
+        "no-var-requires": false
+    }
+}

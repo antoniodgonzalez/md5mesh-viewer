@@ -1,0 +1,34 @@
+<html>
+    <head>
+        <title>MD5Mesh Viewer</title>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="index.css">
+    </head>
+    <body>
+        <canvas id="glcanvas"></canvas>
+        <div id="params">
+            <div>
+                <input type="checkbox" id="skeleton"/>
+                <label for="skeleton">Skeleton</label>
+            </div>
+            <div>
+                <input type="checkbox" id="vertices"/>
+                <label for="vertices">Vertices</label>
+            </div>
+            <div>
+                <input type="checkbox" id="texture" checked="checked"/>
+                <label for="texture">Texture</label>
+                <select id="textureType">
+                    <option value="d">Diffuse</option>
+                    <option value="local">Normal</option>
+                    <option value="h">Height</option>
+                    <option value="s">Specular</option>
+                </select>
+            </div>
+            <div id="meshes">
+                Meshes
+            </div>
+        </div>
+        <script src="bundle.js"></script>
+    </body>
+</html>
