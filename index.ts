@@ -1,6 +1,6 @@
 import * as twgl from "twgl.js";
 import { glMatrix, mat4 } from "gl-matrix";
-import { getRenderingMeshes, getRenderingJoints } from "./rendering";
+import { getRenderingMeshes, getRenderingJoints, getRenderingNormals } from "./rendering";
 import { getModel } from "./md5meshParser";
 import { initSettingsUI, getSettings } from "./settingsUI";
 import * as input from "./input";
@@ -23,6 +23,7 @@ const md5meshSource = require("./models/zfat.md5mesh") as string;
 const md5Mesh = getModel(md5meshSource);
 
 const joints = getRenderingJoints(gl, md5Mesh);
+const normals = getRenderingNormals(gl, md5Mesh);
 const meshes = getRenderingMeshes(gl, md5Mesh);
 
 const solidProgramInfo = twgl.createProgramInfo(gl, [
@@ -61,11 +62,24 @@ function renderJoints() {
         u_worldMatrix: worldMatrix,
         u_viewMatrix: viewMatrix,
         u_projMatrix: projMatrix,
-        u_color: [1.0, 0.0, 0]
+        u_color: [1, 0, 0]
     });
 
     twgl.setBuffersAndAttributes(gl, programInfo, joints.bufferInfo);
     gl.drawArrays(gl.LINES, 0, joints.bufferInfo.numElements);
+}
+
+function renderNormals(i: number) {
+    gl.useProgram(solidProgramInfo.program);
+    twgl.setUniforms(solidProgramInfo, {
+        u_worldMatrix: worldMatrix,
+        u_viewMatrix: viewMatrix,
+        u_projMatrix: projMatrix,
+        u_color: [0, 0, 1]
+    });
+
+    twgl.setBuffersAndAttributes(gl, programInfo, normals[i].bufferInfo);
+    gl.drawArrays(gl.LINES, 0, normals[i].bufferInfo.numElements);
 }
 
 function renderVertices(bufferInfo: twgl.BufferInfo) {
@@ -117,10 +131,18 @@ function render() {
     }
 
     meshes
-        .filter((m, i) => settings.meshes[i])
-        .forEach(mesh => {
+        .forEach((mesh, i) => {
+            const enabled = settings.meshes[i];
+            if (!enabled) {
+                return;
+            }
+
             if (settings.vertices) {
                 renderVertices(mesh.bufferInfo);
+            }
+
+            if (settings.triangleNormals) {
+                renderNormals(i);
             }
 
             if (settings.texture) {

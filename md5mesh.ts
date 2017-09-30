@@ -3,7 +3,7 @@ import {vec3, quat} from "gl-matrix";
 export interface Joint {
     name: string;
     parent: number;
-    position: vec3;
+    position: number[];
     orientation: quat;
 }
 
@@ -13,6 +13,7 @@ export interface Vertex {
     v: number;
     startWeight: number;
     countWeight: number;
+    position: number[];
 }
 
 export interface Triangle {

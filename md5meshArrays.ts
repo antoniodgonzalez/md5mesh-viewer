@@ -1,85 +1,50 @@
-import {vec3, quat} from "gl-matrix";
-import { MD5Mesh } from "./md5mesh";
+import { MD5Mesh, Joint, Triangle } from "./md5mesh";
+import * as R from "ramda";
+import { add, div, sub, normalize, cross } from "./vector";
 
 export function getJointsVertices(model: MD5Mesh): number[] {
     const {joints} = model;
-    const vertices = new Array((joints.length - 1) * 3 * 2);
-    let i = 0;
-
-    joints.filter(j => j.parent !== -1)
-        .forEach(joint => {
-            const parent = joints[joint.parent];
-            vertices[i * 6 + 0] = parent.position[0];
-            vertices[i * 6 + 1] = parent.position[1];
-            vertices[i * 6 + 2] = parent.position[2];
-            vertices[i * 6 + 3] = joint.position[0];
-            vertices[i * 6 + 4] = joint.position[1];
-            vertices[i * 6 + 5] = joint.position[2];
-            i++;
-        });
-
-    return vertices;
-}
-
-function rotate(q: quat, p: vec3): quat {
-    const qp = quat.fromValues(p[0], p[1], p[2], 0);
-
-    const x = quat.multiply(quat.create(), q, qp);
-
-    const qc = quat.conjugate(quat.create(), q);
-    const qcn = quat.normalize(quat.create(), qc);
-    return quat.multiply(quat.create(), x, qcn);
+    const hasParent = (j: Joint) => j.parent !== -1;
+    const getJointVertices = (j: Joint) => [...joints[j.parent].position, ...j.position];
+    return R.flatten<number>(joints.filter(hasParent).map(getJointVertices));
 }
 
 export function getMeshVertices(model: MD5Mesh, index: number = 0): number[] {
-    const {joints} = model;
-    const {vertices, weights} = model.meshes[index];
-    const v = new Array(vertices.length * 3);
-
-    for (let i = 0; i < vertices.length; i++) {
-        const vertex = vertices[i];
-
-        v[i * 3 + 0] = 0;
-        v[i * 3 + 1] = 0;
-        v[i * 3 + 2] = 0;
-        for (let j = 0; j < vertex.countWeight; j++) {
-            const weight = weights[vertex.startWeight + j];
-            const joint = joints[weight.joint];
-
-            const vw = rotate(joint.orientation, weight.position);
-
-            v[i * 3 + 0] += (joint.position[0] + vw[0]) * weight.bias;
-            v[i * 3 + 1] += (joint.position[1] + vw[1]) * weight.bias;
-            v[i * 3 + 2] += (joint.position[2] + vw[2]) * weight.bias;
-        }
-    }
-
-    return v;
+    const { vertices } = model.meshes[index];
+    return R.flatten<number>(vertices.map(v => v.position));
 }
 
 export function getMeshTexCoords(model: MD5Mesh, index: number = 0): number[] {
-    const {vertices} = model.meshes[index];
-    const v = new Array(vertices.length * 2);
-
-    for (let i = 0; i < vertices.length; i++) {
-        const vertex = vertices[i];
-
-        v[i * 2 + 0] = vertex.u;
-        v[i * 2 + 1] = vertex.v;
-    }
-
-    return v;
+    const { vertices } = model.meshes[index];
+    return R.flatten<number>(vertices.map(v => [v.u, v.v]));
 }
 
 export function getMeshTriangles(model: MD5Mesh, index: number = 0): number[] {
-    const {triangles} = model.meshes[index];
-    const v = new Array(triangles.length * 3);
+    const { triangles } = model.meshes[index];
+    return R.flatten<number>(triangles.map(t => [t.v1, t.v2, t.v3]));
+}
 
-    for (let i = 0; i < triangles.length; i++) {
-        v[i * 3 + 0] = triangles[i].v1;
-        v[i * 3 + 1] = triangles[i].v2;
-        v[i * 3 + 2] = triangles[i].v3;
-    }
+export function getMeshTriangleNormals(model: MD5Mesh, index: number): number[] {
+    const sum = (values: number[][]) => values.reduce(add);
+    const midPosition = (values: number[][]) => div(sum(values), values.length);
 
-    return v;
+    const { triangles, vertices } = model.meshes[index];
+
+    const getPositionAndNormal = (triangle: Triangle) => {
+        const p = [
+            vertices[triangle.v1].position,
+            vertices[triangle.v2].position,
+            vertices[triangle.v3].position
+        ];
+
+        const position = midPosition(p);
+
+        const vecA = sub(p[2], p[0]);
+        const vecB = sub(p[1], p[0]);
+        const normal = normalize(cross(vecA, vecB));
+
+        return [ ...position, ...add(position, normal) ];
+    };
+
+    return R.flatten<number>(triangles.map(getPositionAndNormal));
 }

@@ -1,6 +1,12 @@
 import * as twgl from "twgl.js";
 import { MD5Mesh, Mesh } from "./md5mesh";
-import { getMeshVertices, getMeshTriangles, getMeshTexCoords, getJointsVertices } from "./md5meshArrays";
+import {
+    getMeshVertices,
+    getMeshTriangles,
+    getMeshTexCoords,
+    getJointsVertices,
+    getMeshTriangleNormals
+} from "./md5meshArrays";
 
 interface RenderingMesh {
     arrays: twgl.Arrays;
@@ -30,6 +36,19 @@ export function getRenderingJoints(gl: WebGLRenderingContext, md5Mesh: MD5Mesh):
         arrays,
         bufferInfo: twgl.createBufferInfoFromArrays(gl, arrays)
     };
+}
+
+export function getRenderingNormals(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh[] {
+    return md5Mesh.meshes.map((mesh, i) => {
+        const arrays = {
+            position: getMeshTriangleNormals(md5Mesh, i)
+        };
+
+        return {
+            arrays,
+            bufferInfo: twgl.createBufferInfoFromArrays(gl, arrays)
+        };
+    });
 }
 
 export function getRenderingMeshes(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): TexturedRenderingMesh[] {
