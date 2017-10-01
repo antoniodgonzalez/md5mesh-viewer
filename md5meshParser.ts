@@ -1,6 +1,7 @@
 import { MD5Mesh, Joint, Vertex, Triangle, Weight, Mesh } from "./md5mesh";
 import { createUnitQuaternion, rotate } from "./quaternion";
 import { vec3 } from "gl-matrix";
+import { sub, cross, normalize } from "./vector";
 
 const fromPattern = (pattern: string) => new RegExp(pattern.replace(/\ /g, "\\s*"));
 const num = "(-?\\d+\\.?\\d*)";
@@ -72,13 +73,31 @@ function getVertices(meshString: string, weights: Weight[], joints: Joint[]): Ve
     return getParsedLines(meshString, vertexRegEx).map(toVertex);
 }
 
-function getTriangles(meshString: string): Triangle[] {
-    const toTriangle = (x: RegExpExecArray): Triangle => ({
-        index: parseInt10(x[1]),
-        v1: parseInt10(x[2]),
-        v2: parseInt10(x[3]),
-        v3: parseInt10(x[4])
-    });
+function triangleNormal(v1: number, v2: number, v3: number, vertices: Vertex[]) {
+    const p = [
+        vertices[v1].position,
+        vertices[v2].position,
+        vertices[v3].position
+    ];
+
+    const vecA = sub(p[2], p[0]);
+    const vecB = sub(p[1], p[0]);
+    return normalize(cross(vecA, vecB));
+}
+
+function getTriangles(meshString: string, vertices: Vertex[]): Triangle[] {
+    const toTriangle = (x: RegExpExecArray): Triangle => {
+        const v1 = parseInt10(x[2]);
+        const v2 = parseInt10(x[3]);
+        const v3 = parseInt10(x[4]);
+        return {
+            index: parseInt10(x[1]),
+            v1,
+            v2,
+            v3,
+            normal: triangleNormal(v1, v2, v3, vertices)
+        };
+    };
     return getParsedLines(meshString, triangleRegEx).map(toTriangle);
 }
 
@@ -99,10 +118,12 @@ const getShader = (meshString: string): string => {
 
 function getMesh(meshString: string, joints: Joint[]): Mesh {
     const weights = getWeights(meshString);
+    const vertices = getVertices(meshString, weights, joints);
+    const triangles = getTriangles(meshString, vertices);
     return {
         shader: getShader(meshString),
-        vertices: getVertices(meshString, weights, joints),
-        triangles: getTriangles(meshString),
+        vertices,
+        triangles,
         weights
     };
 }

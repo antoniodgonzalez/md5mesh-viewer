@@ -1,6 +1,6 @@
-import { MD5Mesh, Joint, Triangle } from "./md5mesh";
+import { MD5Mesh, Joint, Triangle, Vertex } from "./md5mesh";
 import * as R from "ramda";
-import { add, div, sub, normalize, cross } from "./vector";
+import { add, div, normalize } from "./vector";
 
 export function getJointsVertices(model: MD5Mesh): number[] {
     const {joints} = model;
@@ -38,13 +38,28 @@ export function getMeshTriangleNormals(model: MD5Mesh, index: number): number[] 
         ];
 
         const position = midPosition(p);
-
-        const vecA = sub(p[2], p[0]);
-        const vecB = sub(p[1], p[0]);
-        const normal = normalize(cross(vecA, vecB));
-
-        return [ ...position, ...add(position, normal) ];
+        return [ ...position, ...add(position, triangle.normal) ];
     };
 
     return R.flatten<number>(triangles.map(getPositionAndNormal));
+}
+
+function getVertexNormal(vertex: Vertex, triangles: Triangle[]): number[] {
+    const vertexIsIncluded = (t: Triangle) =>  [ t.v1, t.v2, t.v3 ].includes(vertex.index);
+    const normalsSum = triangles
+        .filter(vertexIsIncluded)
+        .map(t => t.normal)
+        .reduce(add);
+    return normalize(normalsSum);
+}
+
+export function getMeshVertexNormals(model: MD5Mesh, index: number): number[] {
+    const { vertices, triangles } = model.meshes[index];
+
+    const getPositionAndNormal = (vertex: Vertex) => {
+        const normal = getVertexNormal(vertex, triangles);
+        return [ ...vertex.position, ...add(vertex.position, normal) ];
+    };
+
+    return R.flatten<number>(vertices.map(getPositionAndNormal));
 }

@@ -5,7 +5,8 @@ import {
     getMeshTriangles,
     getMeshTexCoords,
     getJointsVertices,
-    getMeshTriangleNormals
+    getMeshTriangleNormals,
+    getMeshVertexNormals
 } from "./md5meshArrays";
 
 interface RenderingMesh {
@@ -38,10 +39,23 @@ export function getRenderingJoints(gl: WebGLRenderingContext, md5Mesh: MD5Mesh):
     };
 }
 
-export function getRenderingNormals(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh[] {
+export function getRenderingTriangleNormals(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh[] {
     return md5Mesh.meshes.map((mesh, i) => {
         const arrays = {
             position: getMeshTriangleNormals(md5Mesh, i)
+        };
+
+        return {
+            arrays,
+            bufferInfo: twgl.createBufferInfoFromArrays(gl, arrays)
+        };
+    });
+}
+
+export function getRenderingVertexNormals(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh[] {
+    return md5Mesh.meshes.map((mesh, i) => {
+        const arrays = {
+            position: getMeshVertexNormals(md5Mesh, i)
         };
 
         return {

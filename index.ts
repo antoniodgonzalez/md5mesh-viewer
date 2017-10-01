@@ -1,6 +1,11 @@
 import * as twgl from "twgl.js";
 import { glMatrix, mat4 } from "gl-matrix";
-import { getRenderingMeshes, getRenderingJoints, getRenderingNormals } from "./rendering";
+import {
+    getRenderingMeshes,
+    getRenderingJoints,
+    getRenderingTriangleNormals,
+    getRenderingVertexNormals
+} from "./rendering";
 import { getModel } from "./md5meshParser";
 import { initSettingsUI, getSettings } from "./settingsUI";
 import * as input from "./input";
@@ -23,7 +28,8 @@ const md5meshSource = require("./models/zfat.md5mesh") as string;
 const md5Mesh = getModel(md5meshSource);
 
 const joints = getRenderingJoints(gl, md5Mesh);
-const normals = getRenderingNormals(gl, md5Mesh);
+const triangleNormals = getRenderingTriangleNormals(gl, md5Mesh);
+const vertexNormals = getRenderingVertexNormals(gl, md5Mesh);
 const meshes = getRenderingMeshes(gl, md5Mesh);
 
 const solidProgramInfo = twgl.createProgramInfo(gl, [
@@ -69,7 +75,7 @@ function renderJoints() {
     gl.drawArrays(gl.LINES, 0, joints.bufferInfo.numElements);
 }
 
-function renderNormals(i: number) {
+function renderTriangleNormals(i: number) {
     gl.useProgram(solidProgramInfo.program);
     twgl.setUniforms(solidProgramInfo, {
         u_worldMatrix: worldMatrix,
@@ -78,8 +84,21 @@ function renderNormals(i: number) {
         u_color: [0, 0, 1]
     });
 
-    twgl.setBuffersAndAttributes(gl, programInfo, normals[i].bufferInfo);
-    gl.drawArrays(gl.LINES, 0, normals[i].bufferInfo.numElements);
+    twgl.setBuffersAndAttributes(gl, programInfo, triangleNormals[i].bufferInfo);
+    gl.drawArrays(gl.LINES, 0, triangleNormals[i].bufferInfo.numElements);
+}
+
+function renderVertexNormals(i: number) {
+    gl.useProgram(solidProgramInfo.program);
+    twgl.setUniforms(solidProgramInfo, {
+        u_worldMatrix: worldMatrix,
+        u_viewMatrix: viewMatrix,
+        u_projMatrix: projMatrix,
+        u_color: [0, 0, 1]
+    });
+
+    twgl.setBuffersAndAttributes(gl, programInfo, vertexNormals[i].bufferInfo);
+    gl.drawArrays(gl.LINES, 0, vertexNormals[i].bufferInfo.numElements);
 }
 
 function renderVertices(bufferInfo: twgl.BufferInfo) {
@@ -142,7 +161,11 @@ function render() {
             }
 
             if (settings.triangleNormals) {
-                renderNormals(i);
+                renderTriangleNormals(i);
+            }
+
+            if (settings.vertexNormals) {
+                renderVertexNormals(i);
             }
 
             if (settings.texture) {

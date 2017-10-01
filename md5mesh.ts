@@ -21,6 +21,7 @@ export interface Triangle {
     v1: number;
     v2: number;
     v3: number;
+    normal: number[];
 }
 
 export interface Weight {

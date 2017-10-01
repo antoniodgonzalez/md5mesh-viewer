@@ -4,6 +4,7 @@ interface Settings {
     skeleton: boolean;
     vertices: boolean;
     triangleNormals: boolean;
+    vertexNormals: boolean;
     texture: boolean;
     textureType: string; // "d" | "local" | "h" | "s";
     meshes: boolean[];
@@ -12,6 +13,7 @@ interface Settings {
 const skeletonCheck = document.getElementById("skeleton") as HTMLInputElement;
 const verticesCheck = document.getElementById("vertices") as HTMLInputElement;
 const triangleNormalsCheck = document.getElementById("triangle-normals") as HTMLInputElement;
+const vertexNormalsCheck = document.getElementById("vertex-normals") as HTMLInputElement;
 const textureCheck = document.getElementById("texture") as HTMLInputElement;
 const textureSelect = document.getElementById("textureType") as HTMLSelectElement;
 const meshesDiv = document.getElementById("meshes") as HTMLDivElement;
@@ -43,6 +45,7 @@ export const getSettings = (): Settings => ({
     skeleton: skeletonCheck.checked,
     vertices: verticesCheck.checked,
     triangleNormals: triangleNormalsCheck.checked,
+    vertexNormals: vertexNormalsCheck.checked,
     texture: textureCheck.checked,
     textureType: textureSelect.value,
     meshes: meshCheckboxes.map(ch => ch.checked)
