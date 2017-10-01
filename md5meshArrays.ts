@@ -24,6 +24,24 @@ export function getMeshTriangles(model: MD5Mesh, index: number = 0): number[] {
     return R.flatten<number>(triangles.map(t => [t.v1, t.v2, t.v3]));
 }
 
+export function getMeshTrianglesPositions(model: MD5Mesh, index: number = 0): number[] {
+    const { triangles, vertices } = model.meshes[index];
+    return R.flatten<number>(triangles.map(t => [
+        ...vertices[t.v1].position,
+        ...vertices[t.v2].position,
+        ...vertices[t.v3].position
+    ]));
+}
+
+export function getMeshTrianglesNormals(model: MD5Mesh, index: number = 0): number[] {
+    const { triangles } = model.meshes[index];
+    return R.flatten<number>(triangles.map(t => [
+        ...t.normal,
+        ...t.normal,
+        ...t.normal
+    ]));
+}
+
 export function getMeshTriangleNormals(model: MD5Mesh, index: number): number[] {
     const sum = (values: number[][]) => values.reduce(add);
     const midPosition = (values: number[][]) => div(sum(values), values.length);

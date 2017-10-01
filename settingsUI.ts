@@ -5,6 +5,7 @@ interface Settings {
     vertices: boolean;
     triangleNormals: boolean;
     vertexNormals: boolean;
+    flatGeometry: boolean;
     texture: boolean;
     textureType: string; // "d" | "local" | "h" | "s";
     meshes: boolean[];
@@ -14,6 +15,7 @@ const skeletonCheck = document.getElementById("skeleton") as HTMLInputElement;
 const verticesCheck = document.getElementById("vertices") as HTMLInputElement;
 const triangleNormalsCheck = document.getElementById("triangle-normals") as HTMLInputElement;
 const vertexNormalsCheck = document.getElementById("vertex-normals") as HTMLInputElement;
+const flatGeometryCheck = document.getElementById("flat-geometry") as HTMLInputElement;
 const textureCheck = document.getElementById("texture") as HTMLInputElement;
 const textureSelect = document.getElementById("textureType") as HTMLSelectElement;
 const meshesDiv = document.getElementById("meshes") as HTMLDivElement;
@@ -34,18 +36,16 @@ function addMeshCheckbox(mesh: Mesh, i: number) {
     meshesDiv.appendChild(div);
 }
 
-export function initSettingsUI(model: MD5Mesh) {
-    for (let i = 0; i < model.meshes.length; i++) {
-        const mesh = model.meshes[i];
-        addMeshCheckbox(mesh, i);
-    }
-}
+export const initSettingsUI = (model: MD5Mesh) => {
+    model.meshes.forEach(addMeshCheckbox);
+};
 
 export const getSettings = (): Settings => ({
     skeleton: skeletonCheck.checked,
     vertices: verticesCheck.checked,
     triangleNormals: triangleNormalsCheck.checked,
     vertexNormals: vertexNormalsCheck.checked,
+    flatGeometry: flatGeometryCheck.checked,
     texture: textureCheck.checked,
     textureType: textureSelect.value,
     meshes: meshCheckboxes.map(ch => ch.checked)

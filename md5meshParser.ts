@@ -1,7 +1,7 @@
 import { MD5Mesh, Joint, Vertex, Triangle, Weight, Mesh } from "./md5mesh";
 import { createUnitQuaternion, rotate } from "./quaternion";
 import { vec3 } from "gl-matrix";
-import { sub, cross, normalize } from "./vector";
+import { add, sub, cross, normalize, mul } from "./vector";
 
 const fromPattern = (pattern: string) => new RegExp(pattern.replace(/\ /g, "\\s*"));
 const num = "(-?\\d+\\.?\\d*)";
@@ -41,20 +41,13 @@ function getJoints(md5meshSource: string): Joint[] {
 }
 
 function getVertexPosition(startWeight: number, countWeight: number, weights: Weight[], joints: Joint[]): number[] {
-    let position = vec3.fromValues(0, 0, 0);
-    for (let i = 0; i < countWeight; i++) {
-        const weight = weights[startWeight + i];
+    const calculateWeightedPosition = (weight: Weight): number[] => {
         const joint = joints[weight.joint];
-
         const rotated = rotate(joint.orientation, weight.position);
+        return mul(add(joint.position, rotated), weight.bias);
+    };
 
-        const x = vec3.add(vec3.create(), joint.position, rotated);
-        const bias = vec3.fromValues(weight.bias, weight.bias, weight.bias); // TODO create mul utility
-        const y = vec3.mul(vec3.create(), x, bias);
-        position = vec3.add(vec3.create(), position, y);
-    }
-
-    return [position[0], position[1], position[2]];
+    return weights.slice(startWeight, startWeight + countWeight).map(calculateWeightedPosition).reduce(add);
 }
 
 function getVertices(meshString: string, weights: Weight[], joints: Joint[]): Vertex[] {

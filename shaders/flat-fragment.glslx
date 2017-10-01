@@ -1,0 +1,12 @@
+precision mediump float;
+
+uniform vec3 u_color;
+
+varying vec3 v_normal;
+
+void main() {
+    vec3 normal = normalize(v_normal);
+    vec3 lightDirection = normalize(vec3(1, 1, 1));
+    float intensity = dot(normal, lightDirection);
+    gl_FragColor = vec4(u_color * intensity, 1);
+}

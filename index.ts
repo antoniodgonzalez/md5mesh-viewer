@@ -4,7 +4,8 @@ import {
     getRenderingMeshes,
     getRenderingJoints,
     getRenderingTriangleNormals,
-    getRenderingVertexNormals
+    getRenderingVertexNormals,
+    getRenderingMeshTriangles
 } from "./rendering";
 import { getModel } from "./md5meshParser";
 import { initSettingsUI, getSettings } from "./settingsUI";
@@ -30,17 +31,17 @@ const md5Mesh = getModel(md5meshSource);
 const joints = getRenderingJoints(gl, md5Mesh);
 const triangleNormals = getRenderingTriangleNormals(gl, md5Mesh);
 const vertexNormals = getRenderingVertexNormals(gl, md5Mesh);
+const meshTriangles = getRenderingMeshTriangles(gl, md5Mesh);
 const meshes = getRenderingMeshes(gl, md5Mesh);
 
-const solidProgramInfo = twgl.createProgramInfo(gl, [
-    require("./shaders/solid-vertex.glslx") as string,
-    require("./shaders/solid-fragment.glslx") as string
+const createProgramInfo = (name: string) => twgl.createProgramInfo(gl, [
+    require(`./shaders/${name}-vertex.glslx`) as string,
+    require(`./shaders/${name}-fragment.glslx`) as string
 ]);
 
-const programInfo = twgl.createProgramInfo(gl, [
-    require("./shaders/vertex.glslx") as string,
-    require("./shaders/fragment.glslx") as string
-]);
+const solidProgramInfo = createProgramInfo("solid");
+const flatProgramInfo = createProgramInfo("flat");
+const programInfo = createProgramInfo("main");
 
 const worldMatrix = mat4.identity(mat4.create());
 
@@ -114,6 +115,20 @@ function renderVertices(bufferInfo: twgl.BufferInfo) {
     twgl.drawBufferInfo(gl, bufferInfo, gl.POINTS);
 }
 
+function renderFlatTriangles(i: number) {
+    const { bufferInfo } = meshTriangles[i];
+    gl.useProgram(flatProgramInfo.program);
+    twgl.setUniforms(flatProgramInfo, {
+        u_worldMatrix: worldMatrix,
+        u_viewMatrix: viewMatrix,
+        u_projMatrix: projMatrix,
+        u_color: [1, 1, 1]
+    });
+
+    twgl.setBuffersAndAttributes(gl, flatProgramInfo, bufferInfo);
+    gl.drawArrays(gl.TRIANGLES, 0, bufferInfo.numElements);
+}
+
 function renderMesh(bufferInfo: twgl.BufferInfo, texture: WebGLTexture) {
     gl.useProgram(programInfo.program);
     twgl.setUniforms(programInfo, {
@@ -166,6 +181,10 @@ function render() {
 
             if (settings.vertexNormals) {
                 renderVertexNormals(i);
+            }
+
+            if (settings.flatGeometry) {
+                renderFlatTriangles(i);
             }
 
             if (settings.texture) {
