@@ -24,11 +24,15 @@
                 <label for="vertex-normals">Vertex normals</label>
             </div>
             <div>
-                <input type="checkbox" id="flat-geometry" checked="checked"/>
+                <input type="checkbox" id="flat-geometry"/>
                 <label for="flat-geometry">Flat geometry</label>
             </div>
             <div>
-                <input type="checkbox" id="texture" checked="checked"/>
+                <input type="checkbox" id="shaded-geometry"/>
+                <label for="shaded-geometry">Shaded geometry</label>
+            </div>
+            <div>
+                <input type="checkbox" id="texture" />
                 <label for="texture">Texture</label>
                 <select id="textureType">
                     <option value="d">Diffuse</option>
@@ -36,6 +40,10 @@
                     <option value="h">Height</option>
                     <option value="s">Specular</option>
                 </select>
+            </div>
+            <div>
+                <input type="checkbox" id="full" checked="checked"/>
+                <label for="full">Full</label>
             </div>
             <div id="meshes">
                 Meshes

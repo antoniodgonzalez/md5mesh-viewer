@@ -6,9 +6,11 @@ interface Settings {
     triangleNormals: boolean;
     vertexNormals: boolean;
     flatGeometry: boolean;
+    shadedGeometry: boolean;
     texture: boolean;
     textureType: string; // "d" | "local" | "h" | "s";
     meshes: boolean[];
+    full: boolean;
 }
 
 const skeletonCheck = document.getElementById("skeleton") as HTMLInputElement;
@@ -16,8 +18,10 @@ const verticesCheck = document.getElementById("vertices") as HTMLInputElement;
 const triangleNormalsCheck = document.getElementById("triangle-normals") as HTMLInputElement;
 const vertexNormalsCheck = document.getElementById("vertex-normals") as HTMLInputElement;
 const flatGeometryCheck = document.getElementById("flat-geometry") as HTMLInputElement;
+const shadedGeometryCheck = document.getElementById("shaded-geometry") as HTMLInputElement;
 const textureCheck = document.getElementById("texture") as HTMLInputElement;
 const textureSelect = document.getElementById("textureType") as HTMLSelectElement;
+const fullCheck = document.getElementById("full") as HTMLInputElement;
 const meshesDiv = document.getElementById("meshes") as HTMLDivElement;
 const meshCheckboxes: HTMLInputElement[] = [];
 
@@ -46,7 +50,9 @@ export const getSettings = (): Settings => ({
     triangleNormals: triangleNormalsCheck.checked,
     vertexNormals: vertexNormalsCheck.checked,
     flatGeometry: flatGeometryCheck.checked,
+    shadedGeometry: shadedGeometryCheck.checked,
     texture: textureCheck.checked,
     textureType: textureSelect.value,
+    full: fullCheck.checked,
     meshes: meshCheckboxes.map(ch => ch.checked)
 });

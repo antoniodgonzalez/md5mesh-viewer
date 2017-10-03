@@ -41,7 +41,9 @@ const createProgramInfo = (name: string) => twgl.createProgramInfo(gl, [
 
 const solidProgramInfo = createProgramInfo("solid");
 const flatProgramInfo = createProgramInfo("flat");
-const programInfo = createProgramInfo("main");
+const shadedProgramInfo = createProgramInfo("shaded");
+const textureProgramInfo = createProgramInfo("texture");
+const mainProgramInfo = createProgramInfo("main");
 
 const worldMatrix = mat4.identity(mat4.create());
 
@@ -72,7 +74,7 @@ function renderJoints() {
         u_color: [1, 0, 0]
     });
 
-    twgl.setBuffersAndAttributes(gl, programInfo, joints.bufferInfo);
+    twgl.setBuffersAndAttributes(gl, solidProgramInfo, joints.bufferInfo);
     gl.drawArrays(gl.LINES, 0, joints.bufferInfo.numElements);
 }
 
@@ -85,7 +87,7 @@ function renderTriangleNormals(i: number) {
         u_color: [0, 0, 1]
     });
 
-    twgl.setBuffersAndAttributes(gl, programInfo, triangleNormals[i].bufferInfo);
+    twgl.setBuffersAndAttributes(gl, solidProgramInfo, triangleNormals[i].bufferInfo);
     gl.drawArrays(gl.LINES, 0, triangleNormals[i].bufferInfo.numElements);
 }
 
@@ -98,7 +100,7 @@ function renderVertexNormals(i: number) {
         u_color: [0, 0, 1]
     });
 
-    twgl.setBuffersAndAttributes(gl, programInfo, vertexNormals[i].bufferInfo);
+    twgl.setBuffersAndAttributes(gl, solidProgramInfo, vertexNormals[i].bufferInfo);
     gl.drawArrays(gl.LINES, 0, vertexNormals[i].bufferInfo.numElements);
 }
 
@@ -111,7 +113,7 @@ function renderVertices(bufferInfo: twgl.BufferInfo) {
         u_color: [1.0, 0.5, 0]
     });
 
-    twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
+    twgl.setBuffersAndAttributes(gl, solidProgramInfo, bufferInfo);
     twgl.drawBufferInfo(gl, bufferInfo, gl.POINTS);
 }
 
@@ -129,7 +131,7 @@ function renderFlatTriangles(i: number) {
     gl.drawArrays(gl.TRIANGLES, 0, bufferInfo.numElements);
 }
 
-function renderMesh(bufferInfo: twgl.BufferInfo, texture: WebGLTexture) {
+function renderMesh(programInfo: twgl.ProgramInfo, bufferInfo: twgl.BufferInfo, texture?: WebGLTexture) {
     gl.useProgram(programInfo.program);
     twgl.setUniforms(programInfo, {
         u_worldMatrix: worldMatrix,
@@ -139,8 +141,10 @@ function renderMesh(bufferInfo: twgl.BufferInfo, texture: WebGLTexture) {
 
     twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
 
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.activeTexture(gl.TEXTURE0);
+    if (texture) {
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.activeTexture(gl.TEXTURE0);
+    }
 
     gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0);
 }
@@ -187,8 +191,16 @@ function render() {
                 renderFlatTriangles(i);
             }
 
+            if (settings.shadedGeometry) {
+                renderMesh(shadedProgramInfo, mesh.bufferInfo);
+            }
+
             if (settings.texture) {
-                renderMesh(mesh.bufferInfo, mesh.textures[settings.textureType]);
+                renderMesh(textureProgramInfo, mesh.bufferInfo, mesh.textures[settings.textureType]);
+            }
+
+            if (settings.full) {
+                renderMesh(mainProgramInfo, mesh.bufferInfo, mesh.textures.d);
             }
         });
 
