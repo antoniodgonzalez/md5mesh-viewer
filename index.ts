@@ -5,7 +5,10 @@ import {
     getRenderingJoints,
     getRenderingTriangleNormals,
     getRenderingVertexNormals,
-    getRenderingMeshTriangles
+    getRenderingMeshTriangles,
+    getRenderingTriangleTangents,
+    RenderingMesh,
+    getRenderingTriangleBitangents
 } from "./rendering";
 import { getModel } from "./md5meshParser";
 import { initSettingsUI, getSettings } from "./settingsUI";
@@ -30,6 +33,8 @@ const md5Mesh = getModel(md5meshSource);
 
 const joints = getRenderingJoints(gl, md5Mesh);
 const triangleNormals = getRenderingTriangleNormals(gl, md5Mesh);
+const triangleTangents = getRenderingTriangleTangents(gl, md5Mesh);
+const triangleBitangents = getRenderingTriangleBitangents(gl, md5Mesh);
 const vertexNormals = getRenderingVertexNormals(gl, md5Mesh);
 const meshTriangles = getRenderingMeshTriangles(gl, md5Mesh);
 const meshes = getRenderingMeshes(gl, md5Mesh);
@@ -45,15 +50,16 @@ const shadedProgramInfo = createProgramInfo("shaded");
 const textureProgramInfo = createProgramInfo("texture");
 const mainProgramInfo = createProgramInfo("main");
 
-const worldMatrix = mat4.identity(mat4.create());
-
-const cameraPosition = [0, 100, 150];
-const viewMatrix = mat4.lookAt(mat4.create(), cameraPosition, [0, 50, 0], [0, 1, 0]);
-
-const projMatrix = mat4.create();
+const cameraPosition = [0, 100, 100];
+const center = [0, 40, 0];
+const matrices = {
+    u_worldMatrix: mat4.identity(mat4.create()),
+    u_viewMatrix: mat4.lookAt(mat4.create(), cameraPosition, center, [0, 1, 0]),
+    u_projMatrix: mat4.create()
+};
 
 function setProjectionMatrix(width: number, height: number) {
-    mat4.perspective(projMatrix, glMatrix.toRadian(45), width / height, 0.1, 1000);
+    mat4.perspective(matrices.u_projMatrix, glMatrix.toRadian(45), width / height, 0.1, 1000);
 }
 
 setProjectionMatrix(canvas.width, canvas.height);
@@ -68,9 +74,7 @@ window.onresize = () => {
 function renderJoints() {
     gl.useProgram(solidProgramInfo.program);
     twgl.setUniforms(solidProgramInfo, {
-        u_worldMatrix: worldMatrix,
-        u_viewMatrix: viewMatrix,
-        u_projMatrix: projMatrix,
+        ...matrices,
         u_color: [1, 0, 0]
     });
 
@@ -78,25 +82,25 @@ function renderJoints() {
     gl.drawArrays(gl.LINES, 0, joints.bufferInfo.numElements);
 }
 
+const renderVectors = (renderingMesh: RenderingMesh, color: number[]) => {
+    twgl.setUniforms(solidProgramInfo, {u_color: color});
+    twgl.setBuffersAndAttributes(gl, solidProgramInfo, renderingMesh.bufferInfo);
+    gl.drawArrays(gl.LINES, 0, renderingMesh.bufferInfo.numElements);
+};
+
 function renderTriangleNormals(i: number) {
     gl.useProgram(solidProgramInfo.program);
-    twgl.setUniforms(solidProgramInfo, {
-        u_worldMatrix: worldMatrix,
-        u_viewMatrix: viewMatrix,
-        u_projMatrix: projMatrix,
-        u_color: [0, 0, 1]
-    });
+    twgl.setUniforms(solidProgramInfo, matrices);
 
-    twgl.setBuffersAndAttributes(gl, solidProgramInfo, triangleNormals[i].bufferInfo);
-    gl.drawArrays(gl.LINES, 0, triangleNormals[i].bufferInfo.numElements);
+    renderVectors(triangleNormals[i], [0, 0, 1]);
+    renderVectors(triangleTangents[i], [0, 1, 0]);
+    renderVectors(triangleBitangents[i], [1, 0, 0]);
 }
 
 function renderVertexNormals(i: number) {
     gl.useProgram(solidProgramInfo.program);
     twgl.setUniforms(solidProgramInfo, {
-        u_worldMatrix: worldMatrix,
-        u_viewMatrix: viewMatrix,
-        u_projMatrix: projMatrix,
+        ...matrices,
         u_color: [0, 0, 1]
     });
 
@@ -107,9 +111,7 @@ function renderVertexNormals(i: number) {
 function renderVertices(bufferInfo: twgl.BufferInfo) {
     gl.useProgram(solidProgramInfo.program);
     twgl.setUniforms(solidProgramInfo, {
-        u_worldMatrix: worldMatrix,
-        u_viewMatrix: viewMatrix,
-        u_projMatrix: projMatrix,
+        ...matrices,
         u_color: [1.0, 0.5, 0]
     });
 
@@ -121,9 +123,7 @@ function renderFlatTriangles(i: number) {
     const { bufferInfo } = meshTriangles[i];
     gl.useProgram(flatProgramInfo.program);
     twgl.setUniforms(flatProgramInfo, {
-        u_worldMatrix: worldMatrix,
-        u_viewMatrix: viewMatrix,
-        u_projMatrix: projMatrix,
+        ...matrices,
         u_color: [1, 1, 1]
     });
 
@@ -133,11 +133,7 @@ function renderFlatTriangles(i: number) {
 
 function renderMesh(programInfo: twgl.ProgramInfo, bufferInfo: twgl.BufferInfo, texture?: WebGLTexture) {
     gl.useProgram(programInfo.program);
-    twgl.setUniforms(programInfo, {
-        u_worldMatrix: worldMatrix,
-        u_viewMatrix: viewMatrix,
-        u_projMatrix: projMatrix
-    });
+    twgl.setUniforms(programInfo, matrices);
 
     twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
 
@@ -157,8 +153,8 @@ initSettingsUI(md5Mesh);
 function render() {
     const angleX = input.update();
     const angleY = Math.PI * 1.5;
-    mat4.rotateY(worldMatrix, identity, angleX);
-    mat4.rotateX(worldMatrix, worldMatrix, angleY);
+    mat4.rotateY(matrices.u_worldMatrix, identity, angleX);
+    mat4.rotateX(matrices.u_worldMatrix, matrices.u_worldMatrix, angleY);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
 

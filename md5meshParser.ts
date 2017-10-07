@@ -56,8 +56,7 @@ function getVertices(meshString: string, weights: Weight[], joints: Joint[]): Ve
         const countWeight = parseInt10(x[5]);
         return {
             index: parseInt10(x[1]),
-            u: parseFloat(x[2]),
-            v: parseFloat(x[3]),
+            uv: [parseFloat(x[2]),  parseFloat(x[3])],
             startWeight,
             countWeight,
             position: getVertexPosition(startWeight, countWeight, weights, joints)
@@ -66,29 +65,37 @@ function getVertices(meshString: string, weights: Weight[], joints: Joint[]): Ve
     return getParsedLines(meshString, vertexRegEx).map(toVertex);
 }
 
-function triangleNormal(v1: number, v2: number, v3: number, vertices: Vertex[]) {
-    const p = [
-        vertices[v1].position,
-        vertices[v2].position,
-        vertices[v3].position
-    ];
+// ref: http://www.terathon.com/code/tangent.html
+function triangleNormals(vertices: Vertex[]) {
+    const p = vertices.map(v => v.position);
+    const deltaPos1 = sub(p[2], p[0]);
+    const deltaPos2 = sub(p[1], p[0]);
+    const normal = normalize(cross(deltaPos1, deltaPos2));
 
-    const vecA = sub(p[2], p[0]);
-    const vecB = sub(p[1], p[0]);
-    return normalize(cross(vecA, vecB));
+    const q = vertices.map(v => v.uv);
+    const deltaUV1 = sub(q[2], q[0]);
+    const deltaUV2 = sub(q[1], q[0]);
+
+    const r = 1 / (deltaUV1[0] * deltaUV2[1] - deltaUV1[1] * deltaUV2[0]);
+    const tangent = normalize(mul(sub(mul(deltaPos1, deltaUV2[1]), mul(deltaPos2, deltaUV1[1])), r));
+    const bitangent = normalize(mul(sub(mul(deltaPos2, deltaUV1[0]), mul(deltaPos1, deltaUV2[0])), r));
+
+    return {
+        normal,
+        tangent,
+        bitangent
+    };
 }
 
 function getTriangles(meshString: string, vertices: Vertex[]): Triangle[] {
     const toTriangle = (x: RegExpExecArray): Triangle => {
-        const v1 = parseInt10(x[2]);
-        const v2 = parseInt10(x[3]);
-        const v3 = parseInt10(x[4]);
+        const asInt = (i: number) => parseInt10(x[i]);
+        const vertexIndices = [asInt(2), asInt(3), asInt(4)];
+        const triangleVertices = vertexIndices.map(i => vertices[i]);
         return {
-            index: parseInt10(x[1]),
-            v1,
-            v2,
-            v3,
-            normal: triangleNormal(v1, v2, v3, vertices)
+            index: asInt(1),
+            indices: vertexIndices,
+            ...triangleNormals(triangleVertices)
         };
     };
     return getParsedLines(meshString, triangleRegEx).map(toTriangle);

@@ -9,11 +9,12 @@ import {
     getMeshVertexNormals,
     getMeshTrianglesPositions,
     getMeshTrianglesNormals,
-    getMeshVertexNormalsDebug
+    getMeshVertexNormalsDebug,
+    getMeshTriangleTangents,
+    getMeshTriangleBitangents
 } from "./md5meshArrays";
 
-interface RenderingMesh {
-    arrays: twgl.Arrays;
+export interface RenderingMesh {
     bufferInfo: twgl.BufferInfo;
 }
 
@@ -31,41 +32,34 @@ function getMeshTextures(gl: WebGLRenderingContext, mesh: Mesh) {
     });
 }
 
-export function getRenderingJoints(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh {
-    const arrays = {
-        position: getJointsVertices(md5Mesh)
-    };
-
+function getRenderingMeshForLines(gl: WebGLRenderingContext, position: number[]): RenderingMesh {
     return {
-        arrays,
-        bufferInfo: twgl.createBufferInfoFromArrays(gl, arrays)
+        bufferInfo: twgl.createBufferInfoFromArrays(gl, { position })
     };
+}
+
+export function getRenderingJoints(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh {
+    return getRenderingMeshForLines(gl, getJointsVertices(md5Mesh));
 }
 
 export function getRenderingTriangleNormals(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh[] {
-    return md5Mesh.meshes.map((mesh, i) => {
-        const arrays = {
-            position: getMeshTriangleNormals(md5Mesh, i)
-        };
+    return md5Mesh.meshes.map((mesh, i) =>
+        getRenderingMeshForLines(gl, getMeshTriangleNormals(md5Mesh, i)));
+}
 
-        return {
-            arrays,
-            bufferInfo: twgl.createBufferInfoFromArrays(gl, arrays)
-        };
-    });
+export function getRenderingTriangleTangents(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh[] {
+    return md5Mesh.meshes.map((mesh, i) =>
+        getRenderingMeshForLines(gl, getMeshTriangleTangents(md5Mesh, i)));
+}
+
+export function getRenderingTriangleBitangents(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh[] {
+    return md5Mesh.meshes.map((mesh, i) =>
+        getRenderingMeshForLines(gl, getMeshTriangleBitangents(md5Mesh, i)));
 }
 
 export function getRenderingVertexNormals(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh[] {
-    return md5Mesh.meshes.map((mesh, i) => {
-        const arrays = {
-            position: getMeshVertexNormalsDebug(md5Mesh, i)
-        };
-
-        return {
-            arrays,
-            bufferInfo: twgl.createBufferInfoFromArrays(gl, arrays)
-        };
-    });
+    return md5Mesh.meshes.map((mesh, i) =>
+        getRenderingMeshForLines(gl, getMeshVertexNormalsDebug(md5Mesh, i)));
 }
 
 export function getRenderingMeshTriangles(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh[] {
@@ -76,7 +70,6 @@ export function getRenderingMeshTriangles(gl: WebGLRenderingContext, md5Mesh: MD
         };
 
         return {
-            arrays,
             bufferInfo: twgl.createBufferInfoFromArrays(gl, arrays)
         };
     });
@@ -92,7 +85,6 @@ export function getRenderingMeshes(gl: WebGLRenderingContext, md5Mesh: MD5Mesh):
         };
 
         return {
-            arrays,
             bufferInfo: twgl.createBufferInfoFromArrays(gl, arrays),
             textures: getMeshTextures(gl, mesh)
         };

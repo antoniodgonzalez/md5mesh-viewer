@@ -9,8 +9,7 @@ export interface Joint {
 
 export interface Vertex {
     index: number;
-    u: number;
-    v: number;
+    uv: number[];
     startWeight: number;
     countWeight: number;
     position: number[];
@@ -18,10 +17,10 @@ export interface Vertex {
 
 export interface Triangle {
     index: number;
-    v1: number;
-    v2: number;
-    v3: number;
+    indices: number[];
     normal: number[];
+    tangent: number[];
+    bitangent: number[];
 }
 
 export interface Weight {
