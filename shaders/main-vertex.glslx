@@ -4,16 +4,20 @@ uniform mat4 u_worldMatrix;
 uniform mat4 u_viewMatrix;
 uniform mat4 u_projMatrix;
 
+uniform vec3 u_lightPosition;
+
 attribute vec3 position;
 attribute vec3 normal;
 attribute vec2 texCoord;
 
+varying vec3 v_surfaceToLight;
 varying vec2 v_texCoord;
 varying vec3 v_normal;
 
 void main() {
     vec4 pos = u_viewMatrix * u_worldMatrix * vec4(position, 1.0);
     gl_Position = u_projMatrix * pos;
+    v_surfaceToLight = u_lightPosition - pos.xyz;
     v_normal = (u_worldMatrix * vec4(normal, 0.0)).xyz;
     v_texCoord = texCoord;
 }

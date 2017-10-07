@@ -54,6 +54,8 @@ const shadedProgramInfo = createProgramInfo("shaded");
 const textureProgramInfo = createProgramInfo("texture");
 const mainProgramInfo = createProgramInfo("main");
 
+const lightBufferInfo = twgl.createBufferInfoFromArrays(gl, { position: [0, 0, 0] });
+
 const cameraPosition = [0, 100, 100];
 const center = [0, 40, 0];
 const matrices = {
@@ -114,7 +116,8 @@ function renderVertices(bufferInfo: twgl.BufferInfo) {
     gl.useProgram(solidProgramInfo.program);
     twgl.setUniforms(solidProgramInfo, {
         ...matrices,
-        u_color: [1.0, 0.5, 0]
+        u_color: [1.0, 0.5, 0],
+        u_pointSize: 3
     });
 
     twgl.setBuffersAndAttributes(gl, solidProgramInfo, bufferInfo);
@@ -126,6 +129,7 @@ function renderFlatTriangles(i: number) {
     gl.useProgram(flatProgramInfo.program);
     twgl.setUniforms(flatProgramInfo, {
         ...matrices,
+        u_lightPosition: input.getLightPosition(),
         u_color: [1, 1, 1]
     });
 
@@ -135,7 +139,11 @@ function renderFlatTriangles(i: number) {
 
 function renderMesh(programInfo: twgl.ProgramInfo, bufferInfo: twgl.BufferInfo, texture?: WebGLTexture) {
     gl.useProgram(programInfo.program);
-    twgl.setUniforms(programInfo, matrices);
+    twgl.setUniforms(programInfo, {
+        ...matrices,
+        u_color: [1, 1, 1],
+        u_lightPosition: input.getLightPosition()
+    });
 
     twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
 
@@ -145,6 +153,21 @@ function renderMesh(programInfo: twgl.ProgramInfo, bufferInfo: twgl.BufferInfo, 
     }
 
     gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0);
+}
+
+function renderLight() {
+    gl.useProgram(solidProgramInfo.program);
+    const worldMatrix = mat4.translate(mat4.create(), mat4.identity(mat4.create()), input.getLightPosition());
+    twgl.setUniforms(solidProgramInfo, {
+        u_worldMatrix: worldMatrix,
+        u_viewMatrix: matrices.u_viewMatrix,
+        u_projMatrix: matrices.u_projMatrix,
+        u_color: [1, 0, 0],
+        u_pointSize: 10
+    });
+
+    twgl.setBuffersAndAttributes(gl, solidProgramInfo, lightBufferInfo);
+    twgl.drawBufferInfo(gl, lightBufferInfo, gl.POINTS);
 }
 
 const identity = mat4.identity(mat4.create());
@@ -161,6 +184,8 @@ function render() {
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     const settings = getSettings();
+
+    renderLight();
 
     if (settings.skeleton) {
         renderJoints();

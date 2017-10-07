@@ -1,11 +1,13 @@
 precision mediump float;
 
+uniform vec3 u_color;
+
+varying vec3 v_surfaceToLight;
 varying vec3 v_normal;
 
 void main() {
     vec3 normal = normalize(v_normal);
-    vec3 lightDirection = normalize(vec3(1, 1, 1));
-    float intensity = dot(normal, lightDirection);
-    vec3 color = vec3(1, 1, 1);
-    gl_FragColor = vec4(color * intensity, 1);
+    vec3 lightDirection = normalize(v_surfaceToLight);
+    float diffuseIntensity = max(dot(normal, lightDirection), 0.0);
+    gl_FragColor = vec4(u_color * diffuseIntensity, 1);
 }
