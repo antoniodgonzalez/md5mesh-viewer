@@ -8,7 +8,9 @@ import {
     getRenderingMeshTriangles,
     getRenderingTriangleTangents,
     RenderingMesh,
-    getRenderingTriangleBitangents
+    getRenderingTriangleBitangents,
+    getRenderingVertexTangents,
+    getRenderingVertexBitangents
 } from "./rendering";
 import { getModel } from "./md5meshParser";
 import { initSettingsUI, getSettings } from "./settingsUI";
@@ -36,6 +38,8 @@ const triangleNormals = getRenderingTriangleNormals(gl, md5Mesh);
 const triangleTangents = getRenderingTriangleTangents(gl, md5Mesh);
 const triangleBitangents = getRenderingTriangleBitangents(gl, md5Mesh);
 const vertexNormals = getRenderingVertexNormals(gl, md5Mesh);
+const vertexTangents = getRenderingVertexTangents(gl, md5Mesh);
+const vertexBitangents = getRenderingVertexBitangents(gl, md5Mesh);
 const meshTriangles = getRenderingMeshTriangles(gl, md5Mesh);
 const meshes = getRenderingMeshes(gl, md5Mesh);
 
@@ -99,13 +103,11 @@ function renderTriangleNormals(i: number) {
 
 function renderVertexNormals(i: number) {
     gl.useProgram(solidProgramInfo.program);
-    twgl.setUniforms(solidProgramInfo, {
-        ...matrices,
-        u_color: [0, 0, 1]
-    });
+    twgl.setUniforms(solidProgramInfo, matrices);
 
-    twgl.setBuffersAndAttributes(gl, solidProgramInfo, vertexNormals[i].bufferInfo);
-    gl.drawArrays(gl.LINES, 0, vertexNormals[i].bufferInfo.numElements);
+    renderVectors(vertexNormals[i], [0, 0, 1]);
+    renderVectors(vertexTangents[i], [0, 1, 0]);
+    renderVectors(vertexBitangents[i], [1, 0, 0]);
 }
 
 function renderVertices(bufferInfo: twgl.BufferInfo) {

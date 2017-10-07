@@ -11,7 +11,9 @@ import {
     getMeshTrianglesNormals,
     getMeshVertexNormalsDebug,
     getMeshTriangleTangents,
-    getMeshTriangleBitangents
+    getMeshTriangleBitangents,
+    getMeshVertexTangentsDebug,
+    getMeshVertexBitangentsDebug
 } from "./md5meshArrays";
 
 export interface RenderingMesh {
@@ -60,6 +62,16 @@ export function getRenderingTriangleBitangents(gl: WebGLRenderingContext, md5Mes
 export function getRenderingVertexNormals(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh[] {
     return md5Mesh.meshes.map((mesh, i) =>
         getRenderingMeshForLines(gl, getMeshVertexNormalsDebug(md5Mesh, i)));
+}
+
+export function getRenderingVertexTangents(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh[] {
+    return md5Mesh.meshes.map((mesh, i) =>
+        getRenderingMeshForLines(gl, getMeshVertexTangentsDebug(md5Mesh, i)));
+}
+
+export function getRenderingVertexBitangents(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh[] {
+    return md5Mesh.meshes.map((mesh, i) =>
+        getRenderingMeshForLines(gl, getMeshVertexBitangentsDebug(md5Mesh, i)));
 }
 
 export function getRenderingMeshTriangles(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh[] {

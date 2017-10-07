@@ -75,11 +75,13 @@ export function getMeshTriangleBitangents(model: MD5Mesh, index: number): number
     return R.flatten<number>(triangles.map(getPositionAndBitangent));
 }
 
-const getVertexNormal = R.curry((triangles: Triangle[], vertex: Vertex): number[] => {
+const getVertexVector = R.curry((triangles: Triangle[],
+                                 getVector: (t: Triangle) => number[],
+                                 vertex: Vertex): number[] => {
     const vertexIsIncluded = ({indices}: Triangle) => indices.includes(vertex.index);
     const normalsSum = triangles
         .filter(vertexIsIncluded)
-        .map(t => t.normal)
+        .map(getVector)
         .reduce(add);
     return normalize(normalsSum);
 });
@@ -88,7 +90,29 @@ export function getMeshVertexNormalsDebug(model: MD5Mesh, index: number): number
     const { vertices, triangles } = model.meshes[index];
 
     const getPositionAndNormal = (vertex: Vertex) => {
-        const normal = getVertexNormal(triangles, vertex);
+        const normal = getVertexVector(triangles, t => t.normal, vertex);
+        return [ ...vertex.position, ...add(vertex.position, normal) ];
+    };
+
+    return R.flatten<number>(vertices.map(getPositionAndNormal));
+}
+
+export function getMeshVertexTangentsDebug(model: MD5Mesh, index: number): number[] {
+    const { vertices, triangles } = model.meshes[index];
+
+    const getPositionAndNormal = (vertex: Vertex) => {
+        const normal = getVertexVector(triangles, t => t.tangent, vertex);
+        return [ ...vertex.position, ...add(vertex.position, normal) ];
+    };
+
+    return R.flatten<number>(vertices.map(getPositionAndNormal));
+}
+
+export function getMeshVertexBitangentsDebug(model: MD5Mesh, index: number): number[] {
+    const { vertices, triangles } = model.meshes[index];
+
+    const getPositionAndNormal = (vertex: Vertex) => {
+        const normal = getVertexVector(triangles, t => t.bitangent, vertex);
         return [ ...vertex.position, ...add(vertex.position, normal) ];
     };
 
@@ -97,6 +121,6 @@ export function getMeshVertexNormalsDebug(model: MD5Mesh, index: number): number
 
 export function getMeshVertexNormals(model: MD5Mesh, index: number): number[] {
     const { vertices, triangles } = model.meshes[index];
-    const normalFromVertex = getVertexNormal(triangles);
+    const normalFromVertex = getVertexVector(triangles, t => t.normal);
     return R.flatten<number>(vertices.map(normalFromVertex));
 }
