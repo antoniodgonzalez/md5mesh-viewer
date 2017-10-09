@@ -1,13 +1,27 @@
 precision mediump float;
 
 uniform vec3 u_color;
+uniform sampler2D u_sampler_height;
+uniform sampler2D u_sampler_diffuse;
+uniform sampler2D u_sampler_specular;
 
 varying vec3 v_surfaceToLight;
+varying vec3 v_surfaceToCamera;
 varying vec3 v_normal;
+varying vec2 v_texCoord;
 
 void main() {
     vec3 normal = normalize(v_normal);
+
     vec3 lightDirection = normalize(v_surfaceToLight);
+
+    float ambientIntensity = 0.2 * texture2D(u_sampler_height, v_texCoord).x;
+
     float diffuseIntensity = max(dot(normal, lightDirection), 0.0);
-    gl_FragColor = vec4(u_color * diffuseIntensity, 1);
+
+    vec3 halfVector = normalize(v_surfaceToCamera + v_surfaceToLight);
+    float specularIntensity = max(pow(dot(normal, halfVector), 64.0), 0.0)
+        * texture2D(u_sampler_specular, v_texCoord).x;
+
+    gl_FragColor = vec4(u_color * (ambientIntensity + diffuseIntensity) + specularIntensity, 1);
 }

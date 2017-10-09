@@ -20,8 +20,12 @@ export interface RenderingMesh {
     bufferInfo: twgl.BufferInfo;
 }
 
+export interface MeshTextures {
+    [key: string]: WebGLTexture;
+}
+
 interface TexturedRenderingMesh extends RenderingMesh {
-    textures: {[key: string]: WebGLTexture};
+    textures: MeshTextures;
 }
 
 function getMeshTextures(gl: WebGLRenderingContext, mesh: Mesh) {

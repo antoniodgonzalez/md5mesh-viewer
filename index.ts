@@ -1,13 +1,14 @@
 import * as twgl from "twgl.js";
 import { glMatrix, mat4 } from "gl-matrix";
 import {
+    RenderingMesh,
+    MeshTextures,
     getRenderingMeshes,
     getRenderingJoints,
     getRenderingTriangleNormals,
     getRenderingVertexNormals,
     getRenderingMeshTriangles,
     getRenderingTriangleTangents,
-    RenderingMesh,
     getRenderingTriangleBitangents,
     getRenderingVertexTangents,
     getRenderingVertexBitangents
@@ -137,20 +138,31 @@ function renderFlatTriangles(i: number) {
     gl.drawArrays(gl.TRIANGLES, 0, bufferInfo.numElements);
 }
 
-function renderMesh(programInfo: twgl.ProgramInfo, bufferInfo: twgl.BufferInfo, texture?: WebGLTexture) {
+function renderTexture(programInfo: twgl.ProgramInfo, bufferInfo: twgl.BufferInfo, texture: WebGLTexture) {
     gl.useProgram(programInfo.program);
     twgl.setUniforms(programInfo, {
         ...matrices,
-        u_color: [1, 1, 1],
-        u_lightPosition: input.getLightPosition()
+        u_lightPosition: input.getLightPosition(),
+        u_sampler: texture
     });
 
     twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
 
-    if (texture) {
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.activeTexture(gl.TEXTURE0);
-    }
+    gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0);
+}
+
+function renderMesh(programInfo: twgl.ProgramInfo, bufferInfo: twgl.BufferInfo, textures: MeshTextures) {
+    gl.useProgram(programInfo.program);
+    twgl.setUniforms(programInfo, {
+        ...matrices,
+        u_color: [1, 1, 1],
+        u_lightPosition: input.getLightPosition(),
+        u_sampler_height: textures.h,
+        u_sampler_diffuse: textures.d,
+        u_sampler_specular: textures.s,
+    });
+
+    twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
 
     gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0);
 }
@@ -215,15 +227,15 @@ function render() {
             }
 
             if (settings.shadedGeometry) {
-                renderMesh(shadedProgramInfo, mesh.bufferInfo);
+                renderMesh(shadedProgramInfo, mesh.bufferInfo, mesh.textures);
             }
 
             if (settings.texture) {
-                renderMesh(textureProgramInfo, mesh.bufferInfo, mesh.textures[settings.textureType]);
+                renderTexture(textureProgramInfo, mesh.bufferInfo, mesh.textures[settings.textureType]);
             }
 
             if (settings.full) {
-                renderMesh(mainProgramInfo, mesh.bufferInfo, mesh.textures.d);
+                renderMesh(mainProgramInfo, mesh.bufferInfo, mesh.textures);
             }
         });
 
