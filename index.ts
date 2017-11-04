@@ -13,9 +13,11 @@ import {
     getRenderingVertexTangents,
     getRenderingVertexBitangents
 } from "./rendering";
-import { getModel } from "./md5meshParser";
+import { getMD5Mesh } from "./md5meshParser";
 import { initSettingsUI, getSettings } from "./settingsUI";
 import * as input from "./input";
+import { getMD5Anim } from "./md5animParser";
+import { getRenderingJointsFrame } from "./anim";
 
 const canvas = document.getElementById("glcanvas") as HTMLCanvasElement;
 twgl.resizeCanvasToDisplaySize(canvas);
@@ -32,9 +34,13 @@ gl.frontFace(gl.CW);
 gl.cullFace(gl.BACK);
 
 const md5meshSource = require("./models/zfat.md5mesh") as string;
-const md5Mesh = getModel(md5meshSource);
+const md5Mesh = getMD5Mesh(md5meshSource);
 
-const joints = getRenderingJoints(gl, md5Mesh);
+const md5animSource = require("./models/idle1.md5anim") as string;
+const md5Anim = getMD5Anim(md5animSource);
+// console.log(md5Anim);
+
+// const joints = getRenderingJoints(gl, md5Mesh);
 const triangleNormals = getRenderingTriangleNormals(gl, md5Mesh);
 const triangleTangents = getRenderingTriangleTangents(gl, md5Mesh);
 const triangleBitangents = getRenderingTriangleBitangents(gl, md5Mesh);
@@ -78,7 +84,11 @@ window.onresize = () => {
     setProjectionMatrix(width, height);
 };
 
-function renderJoints() {
+function renderJoints(animation: string, animationFrame: number) {
+    const joints = animation === "bindPose" ?
+        getRenderingJoints(gl, md5Mesh) :
+        getRenderingJointsFrame(gl, md5Mesh, md5Anim, animationFrame);
+
     gl.useProgram(solidProgramInfo.program);
     twgl.setUniforms(solidProgramInfo, {
         ...matrices,
@@ -185,13 +195,16 @@ function renderLight() {
 const identity = mat4.identity(mat4.create());
 
 input.init();
-initSettingsUI(md5Mesh);
+initSettingsUI(md5Mesh, md5Anim);
 
-function render() {
+let currentFrame = 0;
+
+const render: FrameRequestCallback = (time) => {
     const angleX = input.update();
     const angleY = Math.PI * 1.5;
     mat4.rotateY(matrices.u_worldMatrix, identity, angleX);
     mat4.rotateX(matrices.u_worldMatrix, matrices.u_worldMatrix, angleY);
+    currentFrame = (currentFrame +  24 / 60) % md5Anim.frames.length;
 
     gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -200,7 +213,8 @@ function render() {
     renderLight();
 
     if (settings.skeleton) {
-        renderJoints();
+        const frame = settings.animation === "animated" ? Math.floor(currentFrame) : settings.animationFrame;
+        renderJoints(settings.animation, frame);
     }
 
     meshes
@@ -240,6 +254,6 @@ function render() {
         });
 
     requestAnimationFrame(render);
-}
+};
 
 requestAnimationFrame(render);

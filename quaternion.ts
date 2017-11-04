@@ -1,4 +1,4 @@
-import { quat, vec3 } from "gl-matrix";
+import { quat } from "gl-matrix";
 
 export function createUnitQuaternion(x: number, y: number, z: number): quat {
     const t = 1.0 - x * x - y * y - z * z;
@@ -6,8 +6,8 @@ export function createUnitQuaternion(x: number, y: number, z: number): quat {
     return quat.fromValues(x, y, z, w);
 }
 
-export function rotate(q: quat, p: vec3): number[] {
-    const qp = quat.fromValues(p[0], p[1], p[2], 0);
+export function rotate(q: quat, pos: number[]): number[] {
+    const qp = quat.fromValues(pos[0], pos[1], pos[2], 0);
 
     const x = quat.multiply(quat.create(), q, qp);
 
@@ -16,3 +16,7 @@ export function rotate(q: quat, p: vec3): number[] {
     const res = quat.multiply(quat.create(), x, qcn);
     return [ res[0], res[1], res[2] ];
 }
+
+export const mul = (a: quat, b: quat): quat => quat.mul(quat.create(), a, b);
+
+export const normalize = (q: quat): quat => quat.normalize(quat.create(), q);

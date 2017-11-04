@@ -14,8 +14,11 @@ canvas {
     background-color: rgba(0,0,0,0.2);
     padding: 20px;
 }
-#meshes {
+#meshes, #animation {
     background-color: rgba(0,0,0,0.2);
     padding: 10px;
     margin-top: 10px;
+}
+input[type="number"] {
+    text-align: right;
 }

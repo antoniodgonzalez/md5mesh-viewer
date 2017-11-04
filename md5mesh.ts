@@ -1,4 +1,4 @@
-import {vec3, quat} from "gl-matrix";
+import {quat} from "gl-matrix";
 
 export interface Joint {
     name: string;
@@ -27,7 +27,7 @@ export interface Weight {
     index: number;
     joint: number;
     bias: number;
-    position: vec3;
+    position: number[];
 }
 
 export interface Mesh {

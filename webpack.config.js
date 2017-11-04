@@ -16,7 +16,7 @@ module.exports = {
     module: {
         rules: [
             { test: /\.ts$/, loader: "awesome-typescript-loader" },
-            { test: /\.md5mesh$/, use: "raw-loader" },
+            { test: /\.(md5mesh|md5anim)$/, use: "raw-loader" },
             { test: /\.glslx$/, use: "raw-loader" }
         ]
     },

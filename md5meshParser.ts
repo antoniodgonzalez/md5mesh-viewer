@@ -1,44 +1,21 @@
 import { MD5Mesh, Joint, Vertex, Triangle, Weight, Mesh } from "./md5mesh";
 import { createUnitQuaternion, rotate } from "./quaternion";
-import { vec3 } from "gl-matrix";
 import { add, sub, cross, normalize, mul } from "./vector";
+import { getParsedLines, fromPattern, num, parseInt10, getSection, getSections, str } from "./parserUtils";
 
-const fromPattern = (pattern: string) => new RegExp(pattern.replace(/\ /g, "\\s*"));
-const num = "(-?\\d+\\.?\\d*)";
+const getJointsSection = getSection("joints");
 
-const jointsRegEx = /joints\s*{([\s\S]*?)}/g;
-const jointRegEx = fromPattern(`"(.*?)" ${num} \\( ${num} ${num} ${num} \\) \\( ${num} ${num} ${num} \\)`);
-const meshRegEx = /mesh\s*{([\s\S]*?)}/g;
-const shaderRegEx =  /shader\s*"(.*?)"/;
-const vertexRegEx = fromPattern(`vert ${num} \\( ${num} ${num} \\) ${num} ${num}`);
-const triangleRegEx = fromPattern(`tri ${num} ${num} ${num} ${num}`);
-const weightRegEx = fromPattern(`weight ${num} ${num} ${num} \\( ${num} ${num} ${num} \\)`);
+const jointRegEx = fromPattern(`${str} ${num} \\( ${num} ${num} ${num} \\) \\( ${num} ${num} ${num} \\)`);
+const toJoint = (j: RegExpExecArray): Joint => ({
+    name: j[1],
+    parent: parseInt10(j[2]),
+    position: [parseFloat(j[3]), parseFloat(j[4]), parseFloat(j[5])],
+    orientation: createUnitQuaternion(parseFloat(j[6]), parseFloat(j[7]), parseFloat(j[8]))
+});
 
-const parseInt10 = (x: string) => parseInt(x, 10);
-
-function getParsedLines(input: string, regExp: RegExp): RegExpExecArray[] {
-    // TODO Why this does not work?: const tryParseLine = regExp.exec;
-    const tryParseLine = (line: string) => regExp.exec(line);
-    const lineHasParsed = (x: RegExpExecArray) => x !== null;
-    const lines = input.split("\n");
-    return lines.map(tryParseLine).filter(lineHasParsed) as RegExpExecArray[];
-}
-
-function getJoints(md5meshSource: string): Joint[] {
-    const x = jointsRegEx.exec(md5meshSource);
-    if (!x) {
-        return [];
-    }
-
-    const jointsString = x[1];
-    return getParsedLines(jointsString, jointRegEx)
-        .map(j => ({
-            name: j[1],
-            parent: parseInt10(j[2]),
-            position: [parseFloat(j[3]), parseFloat(j[4]), parseFloat(j[5])],
-            orientation: createUnitQuaternion(parseFloat(j[6]), parseFloat(j[7]), parseFloat(j[8]))
-        }));
-}
+const getParsedJointLines = getParsedLines(jointRegEx);
+const getJoints = (md5meshSource: string): Joint[] =>
+    getParsedJointLines(getJointsSection(md5meshSource)).map(toJoint);
 
 function getVertexPosition(startWeight: number, countWeight: number, weights: Weight[], joints: Joint[]): number[] {
     const calculateWeightedPosition = (weight: Weight): number[] => {
@@ -51,6 +28,7 @@ function getVertexPosition(startWeight: number, countWeight: number, weights: We
 }
 
 function getVertices(meshString: string, weights: Weight[], joints: Joint[]): Vertex[] {
+    const vertexRegEx = fromPattern(`vert ${num} \\( ${num} ${num} \\) ${num} ${num}`);
     const toVertex = (x: RegExpExecArray) => {
         const startWeight = parseInt10(x[4]);
         const countWeight = parseInt10(x[5]);
@@ -62,7 +40,7 @@ function getVertices(meshString: string, weights: Weight[], joints: Joint[]): Ve
             position: getVertexPosition(startWeight, countWeight, weights, joints)
         };
     };
-    return getParsedLines(meshString, vertexRegEx).map(toVertex);
+    return getParsedLines(vertexRegEx)(meshString).map(toVertex);
 }
 
 // ref: http://www.terathon.com/code/tangent.html
@@ -88,6 +66,7 @@ function triangleNormals(vertices: Vertex[]) {
 }
 
 function getTriangles(meshString: string, vertices: Vertex[]): Triangle[] {
+    const triangleRegEx = fromPattern(`tri ${num} ${num} ${num} ${num}`);
     const toTriangle = (x: RegExpExecArray): Triangle => {
         const asInt = (i: number) => parseInt10(x[i]);
         const vertexIndices = [asInt(2), asInt(3), asInt(4)];
@@ -98,25 +77,27 @@ function getTriangles(meshString: string, vertices: Vertex[]): Triangle[] {
             ...triangleNormals(triangleVertices)
         };
     };
-    return getParsedLines(meshString, triangleRegEx).map(toTriangle);
+    return getParsedLines(triangleRegEx)(meshString).map(toTriangle);
 }
 
 function getWeights(meshString: string): Weight[] {
+    const weightRegEx = fromPattern(`weight ${num} ${num} ${num} \\( ${num} ${num} ${num} \\)`);
     const toWeight = (x: RegExpExecArray) => ({
         index: parseInt10(x[1]),
         joint: parseInt10(x[2]),
         bias: parseFloat(x[3]),
-        position: vec3.fromValues(parseFloat(x[4]), parseFloat(x[5]), parseFloat(x[6]))
+        position: [parseFloat(x[4]), parseFloat(x[5]), parseFloat(x[6])]
     });
-    return getParsedLines(meshString, weightRegEx).map(toWeight);
+    return getParsedLines(weightRegEx)(meshString).map(toWeight);
 }
 
+const shaderRegEx = fromPattern(`shader ${str}`);
 const getShader = (meshString: string): string => {
-    const x = shaderRegEx.exec(meshString);
+    const x = meshString.match(shaderRegEx);
     return x !== null ? x[1] : "";
 };
 
-function getMesh(meshString: string, joints: Joint[]): Mesh {
+const getMesh = (joints: Joint[]) => (meshString: string): Mesh => {
     const weights = getWeights(meshString);
     const vertices = getVertices(meshString, weights, joints);
     const triangles = getTriangles(meshString, vertices);
@@ -126,17 +107,12 @@ function getMesh(meshString: string, joints: Joint[]): Mesh {
         triangles,
         weights
     };
-}
+};
 
-export function getModel(md5meshSource: string): MD5Mesh {
+export function getMD5Mesh(md5meshSource: string): MD5Mesh {
     const joints = getJoints(md5meshSource);
-    const getMeshes = (meshes: Mesh[] = []): Mesh[] => {
-        const x = meshRegEx.exec(md5meshSource);
-        return x === null ? meshes : getMeshes([ ...meshes, getMesh(x[1], joints)]);
-    };
-
     return {
         joints,
-        meshes: getMeshes()
+        meshes: getSections("mesh")(md5meshSource).map(getMesh(joints))
     };
 }

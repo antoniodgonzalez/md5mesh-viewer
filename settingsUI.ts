@@ -1,4 +1,5 @@
 import { Mesh, MD5Mesh } from "./md5mesh";
+import { MD5Anim } from "./md5anim";
 
 interface Settings {
     skeleton: boolean;
@@ -11,6 +12,8 @@ interface Settings {
     textureType: string; // "d" | "local" | "h" | "s";
     meshes: boolean[];
     full: boolean;
+    animation: string; // "bindPose" | "animated" | "frame";
+    animationFrame: number;
 }
 
 const skeletonCheck = document.getElementById("skeleton") as HTMLInputElement;
@@ -24,6 +27,10 @@ const textureSelect = document.getElementById("textureType") as HTMLSelectElemen
 const fullCheck = document.getElementById("full") as HTMLInputElement;
 const meshesDiv = document.getElementById("meshes") as HTMLDivElement;
 const meshCheckboxes: HTMLInputElement[] = [];
+const animationBindPose = document.getElementById("animationBindPose") as HTMLInputElement;
+const animationAnimated = document.getElementById("animationAnimated") as HTMLInputElement;
+const animationFrame = document.getElementById("animationFrame") as HTMLInputElement;
+const animationFrameInput = document.getElementById("frame") as HTMLInputElement;
 
 function addMeshCheckbox(mesh: Mesh, i: number) {
     const div = document.createElement("div");
@@ -40,9 +47,14 @@ function addMeshCheckbox(mesh: Mesh, i: number) {
     meshesDiv.appendChild(div);
 }
 
-export const initSettingsUI = (model: MD5Mesh) => {
+export const initSettingsUI = (model: MD5Mesh, anim: MD5Anim) => {
     model.meshes.forEach(addMeshCheckbox);
+    animationFrameInput.max = (anim.frames.length - 1).toString();
 };
+
+const animationRadioButtons = [animationBindPose, animationAnimated, animationFrame];
+const getAnimation = (): string =>
+    (animationRadioButtons.find(x => x.checked) as HTMLInputElement).value;
 
 export const getSettings = (): Settings => ({
     skeleton: skeletonCheck.checked,
@@ -54,5 +66,7 @@ export const getSettings = (): Settings => ({
     texture: textureCheck.checked,
     textureType: textureSelect.value,
     full: fullCheck.checked,
-    meshes: meshCheckboxes.map(ch => ch.checked)
+    meshes: meshCheckboxes.map(ch => ch.checked),
+    animation: getAnimation(),
+    animationFrame: parseInt(animationFrameInput.value, 10)
 });

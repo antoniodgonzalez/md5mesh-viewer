@@ -8,7 +8,7 @@
         <canvas id="glcanvas"></canvas>
         <div id="params">
             <div>
-                <input type="checkbox" id="skeleton"/>
+                <input type="checkbox" id="skeleton" checked="checked"/>
                 <label for="skeleton">Skeleton</label>
             </div>
             <div>
@@ -42,11 +42,27 @@
                 </select>
             </div>
             <div>
-                <input type="checkbox" id="full" checked="checked"/>
+                <input type="checkbox" id="full"/>
                 <label for="full">Full</label>
             </div>
             <div id="meshes">
-                Meshes
+                <strong>Meshes</strong>
+            </div>
+            <div id="animation">
+                <strong>Animation</strong>
+                <div>
+                    <input type="radio" id="animationBindPose" name="animation" value="bindPose" /><label>
+                    <label for="animationBindPose">Bind pose</label>
+                </div>
+                <div>
+                    <input type="radio" id="animationAnimated" name="animation" value="animated" />
+                    <label for="animationAnimated">Animated</label>
+                </div>
+                <div></div>
+                    <input type="radio" id="animationFrame" name="animation" value="frame" checked="checked" />
+                    <label for="animationFrame">Frame</label>
+                    <input type="number" id="frame" value="0" min="0" max="0" />
+                </div>
             </div>
         </div>
         <script src="bundle.js"></script>
