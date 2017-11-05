@@ -2,24 +2,13 @@ import { Joint, MD5Mesh } from "./md5mesh";
 import { BaseFrame, Hierarchy, Frame, MD5Anim } from "./md5anim";
 import { createUnitQuaternion, rotate } from "./quaternion";
 import { normalize, mul } from "./quaternion";
-import { quat } from "gl-matrix";
-import { flatten } from "ramda";
+import { add, flatten } from "./vector";
 import { RenderingMesh } from "./rendering";
 import * as twgl from "twgl.js";
 
 // tslint:disable:no-bitwise
 
-type Vector = ReadonlyArray<number>;
-const add = (a: Vector, b: Vector): Vector => a.map((_, i) => a[i] + b[i]);
-
-interface AnimatedJoint {
-    parent: number;
-    position: ReadonlyArray<number>;
-    orientation: quat;
-}
-
-const animateJoint = (joint: Joint, baseFrame: BaseFrame, hierarchy: Hierarchy, frame: Frame,
-                      parent: AnimatedJoint): AnimatedJoint => {
+const animateJoint = (joint: Joint, baseFrame: BaseFrame, hierarchy: Hierarchy, frame: Frame, parent: Joint): Joint => {
     let j = 0;
     const tx = hierarchy.flags & 1 ? frame.components[hierarchy.startIndex + j++] : baseFrame.position[0];
     const ty = hierarchy.flags & 2 ? frame.components[hierarchy.startIndex + j++] : baseFrame.position[1];
@@ -42,7 +31,7 @@ const animateJoint = (joint: Joint, baseFrame: BaseFrame, hierarchy: Hierarchy, 
     };
 };
 
-const animate = (mesh: MD5Mesh, anim: MD5Anim, frameIndex: number): ReadonlyArray<AnimatedJoint> =>
+const animate = (mesh: MD5Mesh, anim: MD5Anim, frameIndex: number): ReadonlyArray<Joint> =>
     mesh.joints
         .map((joint, i) => ({joint, hierarchy: anim.hierarchy[i], baseFrame: anim.baseFrame[i]}))
         .reduce((animatedJoints, x) =>
@@ -51,11 +40,11 @@ const animate = (mesh: MD5Mesh, anim: MD5Anim, frameIndex: number): ReadonlyArra
                              animatedJoints[x.hierarchy.parent])]
         , []);
 
-const getJointsVertices = (md5Mesh: MD5Mesh, md5Anim: MD5Anim, frameIndex: number): number[] => {
+const getJointsVertices = (md5Mesh: MD5Mesh, md5Anim: MD5Anim, frameIndex: number): ReadonlyArray<number> => {
     const joints = animate(md5Mesh, md5Anim, frameIndex);
-    const hasParent = (j: AnimatedJoint) => j.parent !== -1;
-    const getJointVertices = (j: AnimatedJoint) => [...joints[j.parent].position, ...j.position];
-    return flatten<number>(joints.filter(hasParent).map(getJointVertices));
+    const hasParent = (j: Joint) => j.parent !== -1;
+    const getJointVertices = (j: Joint) => [...joints[j.parent].position, ...j.position];
+    return flatten(joints.filter(hasParent).map(getJointVertices));
 };
 
 export const getRenderingJointsFrame = (gl: WebGLRenderingContext,

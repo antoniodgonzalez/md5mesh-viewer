@@ -1,10 +1,11 @@
-import {quat} from "gl-matrix";
+import { Quaternion } from "./quaternion";
+import { Vector } from "./vector";
 
 export interface Joint {
-    name: string;
+    name?: string;
     parent: number;
-    position: number[];
-    orientation: quat;
+    position: ReadonlyArray<number>;
+    orientation: Quaternion;
 }
 
 export interface Vertex {
@@ -12,22 +13,21 @@ export interface Vertex {
     uv: number[];
     startWeight: number;
     countWeight: number;
-    position: number[];
 }
 
 export interface Triangle {
     index: number;
     indices: number[];
-    normal: number[];
-    tangent: number[];
-    bitangent: number[];
+    normal: Vector;
+    tangent: Vector;
+    bitangent: Vector;
 }
 
 export interface Weight {
     index: number;
     joint: number;
     bias: number;
-    position: number[];
+    position: Vector;
 }
 
 export interface Mesh {

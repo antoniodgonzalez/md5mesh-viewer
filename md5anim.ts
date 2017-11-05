@@ -1,4 +1,4 @@
-import { quat } from "gl-matrix";
+import { Quaternion } from "./quaternion";
 
 export interface Hierarchy {
     name: string;
@@ -14,7 +14,7 @@ export interface Bounds {
 
 export interface BaseFrame {
     position: ReadonlyArray<number>;
-    orientation: quat;
+    orientation: Quaternion;
 }
 
 export interface Frame {

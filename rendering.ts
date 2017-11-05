@@ -38,7 +38,7 @@ function getMeshTextures(gl: WebGLRenderingContext, mesh: Mesh) {
     });
 }
 
-const getRenderingMeshForLines = (gl: WebGLRenderingContext, position: number[]): RenderingMesh  => ({
+const getRenderingMeshForLines = (gl: WebGLRenderingContext, position: ReadonlyArray<number>): RenderingMesh  => ({
     bufferInfo: twgl.createBufferInfoFromArrays(gl, { position })
 });
 

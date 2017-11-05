@@ -1,22 +1,25 @@
 import { quat } from "gl-matrix";
+import { Vector } from "./vector";
 
-export function createUnitQuaternion(x: number, y: number, z: number): quat {
+export type Quaternion = ReadonlyArray<number>;
+
+const toQuat = (q: Quaternion): quat => quat.fromValues(q[0], q[1], q[2], q[3]);
+const toQuaternion = (q: quat): Quaternion => [q[0], q[1], q[2], q[3]];
+const conjugate = (q: Quaternion): Quaternion => toQuaternion(quat.conjugate(quat.create(), toQuat(q)));
+
+export const createUnitQuaternion = (x: number, y: number, z: number): Quaternion => {
     const t = 1.0 - x * x - y * y - z * z;
     const w = t < 0.0 ? 0.0 : -Math.sqrt (t);
-    return quat.fromValues(x, y, z, w);
-}
+    return [ x, y, z, w ];
+};
 
-export function rotate(q: quat, pos: number[]): number[] {
-    const qp = quat.fromValues(pos[0], pos[1], pos[2], 0);
+const toVector = (q: Quaternion): Vector => q.slice(0, 3);
 
-    const x = quat.multiply(quat.create(), q, qp);
+export const rotate = (q: Quaternion, pos: Vector): Vector =>
+    toVector(mul(mul(q, [...pos, 0]), normalize(conjugate(q))));
 
-    const qc = quat.conjugate(quat.create(), q);
-    const qcn = quat.normalize(quat.create(), qc);
-    const res = quat.multiply(quat.create(), x, qcn);
-    return [ res[0], res[1], res[2] ];
-}
+export const mul = (a: Quaternion, b: Quaternion): Quaternion =>
+    toQuaternion(quat.mul(quat.create(), toQuat(a), toQuat(b)));
 
-export const mul = (a: quat, b: quat): quat => quat.mul(quat.create(), a, b);
-
-export const normalize = (q: quat): quat => quat.normalize(quat.create(), q);
+export const normalize = (q: Quaternion): Quaternion =>
+    toQuaternion(quat.normalize(quat.create(), toQuat(q)));

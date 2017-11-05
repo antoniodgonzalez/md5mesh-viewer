@@ -38,9 +38,7 @@ const md5Mesh = getMD5Mesh(md5meshSource);
 
 const md5animSource = require("./models/idle1.md5anim") as string;
 const md5Anim = getMD5Anim(md5animSource);
-// console.log(md5Anim);
 
-// const joints = getRenderingJoints(gl, md5Mesh);
 const triangleNormals = getRenderingTriangleNormals(gl, md5Mesh);
 const triangleTangents = getRenderingTriangleTangents(gl, md5Mesh);
 const triangleBitangents = getRenderingTriangleBitangents(gl, md5Mesh);

@@ -1,19 +1,23 @@
-import { vec3 } from "gl-matrix";
+export type Vector = ReadonlyArray<number>;
 
-export const add = (a: number[], b: number[]): number[] => [ a[0] + b[0], a[1] + b[1], a[2] + b[2] ];
+export const add = (a: Vector, b: Vector): Vector => a.map((_, i) => a[i] + b[i]);
 
-export const sub = (a: number[], b: number[]): number[] => a.map((_, i) => a[i] - b[i]);
+export const sub = (a: Vector, b: Vector): Vector => a.map((_, i) => a[i] - b[i]);
 
-export const mul = (a: number[], b: number): number[] => [ a[0] * b, a[1] * b, a[2] * b ];
+export const mul = (a: Vector, b: number): Vector => a.map(x => x * b);
 
-export const div = (a: number[], b: number): number[] => [ a[0] / b, a[1] / b, a[2] / b ];
+export const div = (a: Vector, b: number): Vector => a.map(x => x / b);
 
-export const cross = (a: number[], b: number[]): number[] => {
-    const c = vec3.cross(vec3.create(), a, b);
-    return [c[0], c[1], c[2]];
+export const cross = (a: Vector, b: Vector): Vector => [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0]
+];
+
+export const normalize = (a: Vector): Vector => {
+    const sum = a.reduce((s, x) => s += x * x, 0);
+    return sum <= 0 ? a : div(a, Math.sqrt(sum));
 };
 
-export const normalize = (a: number[]): number[] => {
-    const c = vec3.normalize(vec3.create(), a);
-    return [c[0], c[1], c[2]];
-};
+export const flatten = (array: ReadonlyArray<Vector>) =>
+    array.reduce((a: ReadonlyArray<number>, b: Vector) => [...a, ...b], []);
