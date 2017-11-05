@@ -17,7 +17,8 @@ const getParsedJointLines = getParsedLines(jointRegEx);
 const getJoints = (md5meshSource: string): Joint[] =>
     getParsedJointLines(getJointsSection(md5meshSource)).map(toJoint);
 
-export const getVertexPosition = (weights: Weight[], joints: Joint[]) => (vertex: Vertex): Vector => {
+export const getVertexPosition = (weights: ReadonlyArray<Weight>, joints: ReadonlyArray<Joint>) =>
+                                 (vertex: Vertex): Vector => {
     const calculateWeightedPosition = (weight: Weight): Vector => {
         const joint = joints[weight.joint];
         const rotated = rotate(joint.orientation, weight.position);

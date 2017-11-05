@@ -2,9 +2,7 @@ import { Joint, MD5Mesh } from "./md5mesh";
 import { BaseFrame, Hierarchy, Frame, MD5Anim } from "./md5anim";
 import { createUnitQuaternion, rotate } from "./quaternion";
 import { normalize, mul } from "./quaternion";
-import { add, flatten } from "./vector";
-import { RenderingMesh } from "./rendering";
-import * as twgl from "twgl.js";
+import { add } from "./vector";
 
 // tslint:disable:no-bitwise
 
@@ -31,7 +29,7 @@ const animateJoint = (joint: Joint, baseFrame: BaseFrame, hierarchy: Hierarchy, 
     };
 };
 
-const animate = (mesh: MD5Mesh, anim: MD5Anim, frameIndex: number): ReadonlyArray<Joint> =>
+export const getAnimatedJoints = (mesh: MD5Mesh, anim: MD5Anim, frameIndex: number): ReadonlyArray<Joint> =>
     mesh.joints
         .map((joint, i) => ({joint, hierarchy: anim.hierarchy[i], baseFrame: anim.baseFrame[i]}))
         .reduce((animatedJoints, x) =>
@@ -39,15 +37,3 @@ const animate = (mesh: MD5Mesh, anim: MD5Anim, frameIndex: number): ReadonlyArra
                 animateJoint(x.joint, x.baseFrame, x.hierarchy, anim.frames[frameIndex],
                              animatedJoints[x.hierarchy.parent])]
         , []);
-
-const getJointsVertices = (md5Mesh: MD5Mesh, md5Anim: MD5Anim, frameIndex: number): ReadonlyArray<number> => {
-    const joints = animate(md5Mesh, md5Anim, frameIndex);
-    const hasParent = (j: Joint) => j.parent !== -1;
-    const getJointVertices = (j: Joint) => [...joints[j.parent].position, ...j.position];
-    return flatten(joints.filter(hasParent).map(getJointVertices));
-};
-
-export const getRenderingJointsFrame = (gl: WebGLRenderingContext,
-                                        md5Mesh: MD5Mesh, md5Anim: MD5Anim, frameIndex: number): RenderingMesh => ({
-    bufferInfo: twgl.createBufferInfoFromArrays(gl, { position: getJointsVertices(md5Mesh, md5Anim, frameIndex) })
-});

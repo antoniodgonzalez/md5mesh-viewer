@@ -1,5 +1,5 @@
 import * as twgl from "twgl.js";
-import { MD5Mesh, Mesh } from "./md5mesh";
+import { MD5Mesh, Mesh, Joint } from "./md5mesh";
 import {
     getMeshVertices,
     getMeshTriangles,
@@ -42,8 +42,8 @@ const getRenderingMeshForLines = (gl: WebGLRenderingContext, position: ReadonlyA
     bufferInfo: twgl.createBufferInfoFromArrays(gl, { position })
 });
 
-export const getRenderingJoints = (gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh =>
-    getRenderingMeshForLines(gl, getJointsVertices(md5Mesh));
+export const getRenderingJoints = (gl: WebGLRenderingContext, joints: ReadonlyArray<Joint>): RenderingMesh =>
+    getRenderingMeshForLines(gl, getJointsVertices(joints));
 
 export const getRenderingTriangleNormals = (gl: WebGLRenderingContext, md5Mesh: MD5Mesh): RenderingMesh[] =>
     md5Mesh.meshes.map((mesh, i) =>
@@ -82,12 +82,12 @@ export const getRenderingMeshTriangles = (gl: WebGLRenderingContext, md5Mesh: MD
     });
 
 export function getRenderingMeshes(gl: WebGLRenderingContext, md5Mesh: MD5Mesh): TexturedRenderingMesh[] {
-    return md5Mesh.meshes.map((mesh, i) => {
+    return md5Mesh.meshes.map(mesh => {
         const arrays = {
-            position: getMeshVertices(md5Mesh, i),
-            normal: getMeshVertexNormals(md5Mesh, i),
-            texCoord: getMeshTexCoords(md5Mesh, i),
-            indices: getMeshTriangles(md5Mesh, i)
+            position: getMeshVertices(md5Mesh, mesh, md5Mesh.joints),
+            normal: getMeshVertexNormals(md5Mesh, mesh),
+            texCoord: getMeshTexCoords(md5Mesh, mesh),
+            indices: getMeshTriangles(md5Mesh, mesh)
         };
 
         return {

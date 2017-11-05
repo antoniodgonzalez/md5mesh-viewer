@@ -1,28 +1,21 @@
-import { MD5Mesh, Joint, Triangle, Vertex } from "./md5mesh";
+import { MD5Mesh, Joint, Triangle, Vertex, Mesh } from "./md5mesh";
 import { add, div, normalize, Vector, flatten } from "./vector";
 import { getVertexPosition } from "./md5meshParser";
 
-export function getJointsVertices(model: MD5Mesh): ReadonlyArray<number> {
-    const { joints } = model;
+export function getJointsVertices(joints: ReadonlyArray<Joint>): ReadonlyArray<number> {
     const hasParent = (j: Joint) => j.parent !== -1;
     const getJointVertices = (j: Joint) => [...joints[j.parent].position, ...j.position];
     return flatten(joints.filter(hasParent).map(getJointVertices));
 }
 
-export function getMeshVertices(model: MD5Mesh, index: number = 0): ReadonlyArray<number> {
-    const { vertices, weights } = model.meshes[index];
-    return flatten(vertices.map(getVertexPosition(weights, model.joints)));
-}
+export const getMeshVertices = (model: MD5Mesh, mesh: Mesh, joints: ReadonlyArray<Joint>): ReadonlyArray<number> =>
+    flatten(mesh.vertices.map(getVertexPosition(mesh.weights, joints)));
 
-export function getMeshTexCoords(model: MD5Mesh, index: number = 0): ReadonlyArray<number> {
-    const { vertices } = model.meshes[index];
-    return flatten(vertices.map(v => v.uv));
-}
+export const getMeshTexCoords = (model: MD5Mesh, mesh: Mesh): ReadonlyArray<number> =>
+    flatten(mesh.vertices.map(v => v.uv));
 
-export function getMeshTriangles(model: MD5Mesh, index: number = 0): ReadonlyArray<number> {
-    const { triangles } = model.meshes[index];
-    return flatten(triangles.map(t => t.indices));
-}
+export const getMeshTriangles = (model: MD5Mesh, mesh: Mesh): ReadonlyArray<number> =>
+    flatten(mesh.triangles.map(t => t.indices));
 
 export function getMeshTrianglesPositions(model: MD5Mesh, index: number = 0): ReadonlyArray<number> {
     const { triangles, vertices } = model.meshes[index];
@@ -121,8 +114,8 @@ export function getMeshVertexBitangentsDebug(model: MD5Mesh, index: number): Rea
     return flatten(vertices.map(getPositionAndNormal));
 }
 
-export function getMeshVertexNormals(model: MD5Mesh, index: number): ReadonlyArray<number> {
-    const { vertices, triangles } = model.meshes[index];
+export const getMeshVertexNormals = (model: MD5Mesh, mesh: Mesh): ReadonlyArray<number> => {
+    const { vertices, triangles } = mesh;
     const normalFromVertex = (v: Vertex) => getVertexVector(triangles, t => t.normal, v);
     return flatten(vertices.map(normalFromVertex));
-}
+};

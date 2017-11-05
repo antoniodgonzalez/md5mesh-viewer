@@ -30,7 +30,7 @@ declare module "twgl.js" {
             [key: string]: number[] | ArrayBuffer | ReadonlyArray<number>
         }
 
-        export type ArraySpec = number[] | ArrayBuffer | FullArraySpec;
+        export type ArraySpec = number[] | ArrayBuffer | FullArraySpec | ReadonlyArray<number>;
 
         export interface AttachmentOptions extends TextureOptions {
             attach?: number;

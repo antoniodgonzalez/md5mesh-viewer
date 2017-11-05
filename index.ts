@@ -17,7 +17,10 @@ import { getMD5Mesh } from "./md5meshParser";
 import { initSettingsUI, getSettings } from "./settingsUI";
 import * as input from "./input";
 import { getMD5Anim } from "./md5animParser";
-import { getRenderingJointsFrame } from "./anim";
+import { getAnimatedJoints } from "./anim";
+import { MD5Mesh, Joint } from "./md5mesh";
+import { MD5Anim } from "./md5anim";
+import { getMeshVertices } from "./md5meshArrays";
 
 const canvas = document.getElementById("glcanvas") as HTMLCanvasElement;
 twgl.resizeCanvasToDisplaySize(canvas);
@@ -82,10 +85,8 @@ window.onresize = () => {
     setProjectionMatrix(width, height);
 };
 
-function renderJoints(animation: string, animationFrame: number) {
-    const joints = animation === "bindPose" ?
-        getRenderingJoints(gl, md5Mesh) :
-        getRenderingJointsFrame(gl, md5Mesh, md5Anim, animationFrame);
+function renderJoints(joints: ReadonlyArray<Joint>) {
+    const renderingJoints = getRenderingJoints(gl, joints);
 
     gl.useProgram(solidProgramInfo.program);
     twgl.setUniforms(solidProgramInfo, {
@@ -93,8 +94,8 @@ function renderJoints(animation: string, animationFrame: number) {
         u_color: [1, 0, 0]
     });
 
-    twgl.setBuffersAndAttributes(gl, solidProgramInfo, joints.bufferInfo);
-    gl.drawArrays(gl.LINES, 0, joints.bufferInfo.numElements);
+    twgl.setBuffersAndAttributes(gl, solidProgramInfo, renderingJoints.bufferInfo);
+    gl.drawArrays(gl.LINES, 0, renderingJoints.bufferInfo.numElements);
 }
 
 const renderVectors = (renderingMesh: RenderingMesh, color: number[]) => {
@@ -133,8 +134,7 @@ function renderVertices(bufferInfo: twgl.BufferInfo) {
     twgl.drawBufferInfo(gl, bufferInfo, gl.POINTS);
 }
 
-function renderFlatTriangles(i: number) {
-    const { bufferInfo } = meshTriangles[i];
+function renderFlatTriangles(bufferInfo: twgl.BufferInfo) {
     gl.useProgram(flatProgramInfo.program);
     twgl.setUniforms(flatProgramInfo, {
         ...matrices,
@@ -190,6 +190,13 @@ function renderLight() {
     twgl.drawBufferInfo(gl, lightBufferInfo, gl.POINTS);
 }
 
+function animateJoints(md5mesh: MD5Mesh, md5anim: MD5Anim, animation: string, frame: number): ReadonlyArray<Joint> {
+    const joints = animation === "bindPose" ? md5mesh.joints :
+        getAnimatedJoints(md5Mesh, md5Anim, frame);
+
+    return joints;
+}
+
 const identity = mat4.identity(mat4.create());
 
 input.init();
@@ -210,9 +217,11 @@ const render: FrameRequestCallback = (time) => {
 
     renderLight();
 
+    const frame = settings.animation === "animated" ? Math.floor(currentFrame) : settings.animationFrame;
+    const joints = animateJoints(md5Mesh, md5Anim, settings.animation, frame);
+
     if (settings.skeleton) {
-        const frame = settings.animation === "animated" ? Math.floor(currentFrame) : settings.animationFrame;
-        renderJoints(settings.animation, frame);
+        renderJoints(joints);
     }
 
     meshes
@@ -221,6 +230,9 @@ const render: FrameRequestCallback = (time) => {
             if (!enabled) {
                 return;
             }
+
+            const position = getMeshVertices(md5Mesh, md5Mesh.meshes[i], joints);
+            twgl.setAttribInfoBufferFromArray(gl, mesh.bufferInfo.attribs.position, position);
 
             if (settings.vertices) {
                 renderVertices(mesh.bufferInfo);
@@ -235,7 +247,7 @@ const render: FrameRequestCallback = (time) => {
             }
 
             if (settings.flatGeometry) {
-                renderFlatTriangles(i);
+                renderFlatTriangles(meshTriangles[i].bufferInfo);
             }
 
             if (settings.shadedGeometry) {
