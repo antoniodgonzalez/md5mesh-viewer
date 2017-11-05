@@ -41,12 +41,12 @@ const toFrame = (index: string, components: string): Frame => ({
 
 const framesRegEx = fromPattern(`frame ${num} {([\\s\\S]*?)}`, "g");
 const frameRegEx = fromPattern(`frame ${num} {([\\s\\S]*?)}`);
-const getFrames = (md5animSource: string): ReadonlyArray<Frame>  => {
-    const f = md5animSource.match(framesRegEx) || [];
-    return f
-        .map(frame => frame.match(frameRegEx))
-        .map((x: RegExpMatchArray) => toFrame(x[1], x[2]));
-};
+const getFrames = (md5animSource: string): ReadonlyArray<Frame> =>
+    (md5animSource.match(framesRegEx) || [])
+        .map(frame => {
+            const x = frame.match(frameRegEx) as RegExpMatchArray;
+            return toFrame(x[1], x[2]);
+        });
 
 export const getMD5Anim = (md5animSource: string): MD5Anim => ({
     hierarchy: getHierarchy(md5animSource),

@@ -15,8 +15,8 @@ export const getSections = (name: string) => (md5meshSource: string): string[] =
 export const getSection = (name: string) => (md5meshSource: string): string =>
     getSections(name)(md5meshSource)[0];
 
-export const getParsedLines = (regExp: RegExp) => (input: string): RegExpExecArray[] => {
+export const getParsedLines = (regExp: RegExp) => (input: string): RegExpMatchArray[] => {
     const tryParseLine = (line: string) => line.match(regExp);
-    const lineHasParsed = (x: RegExpExecArray) => x !== null;
-    return input.split("\n").map(tryParseLine).filter(lineHasParsed) as RegExpExecArray[];
+    const lineHasParsed = (x: RegExpMatchArray | null) => x !== null;
+    return input.split("\n").map(tryParseLine).filter(lineHasParsed) as RegExpMatchArray[];
 };

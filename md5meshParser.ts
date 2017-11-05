@@ -6,7 +6,7 @@ import { getParsedLines, fromPattern, num, parseInt10, getSection, getSections, 
 const getJointsSection = getSection("joints");
 
 const jointRegEx = fromPattern(`${str} ${num} \\( ${num} ${num} ${num} \\) \\( ${num} ${num} ${num} \\)`);
-const toJoint = (j: RegExpExecArray): Joint => ({
+const toJoint = (j: RegExpMatchArray): Joint => ({
     name: j[1],
     parent: parseInt10(j[2]),
     position: [parseFloat(j[3]), parseFloat(j[4]), parseFloat(j[5])],
@@ -31,7 +31,7 @@ export const getVertexPosition = (weights: ReadonlyArray<Weight>, joints: Readon
 
 function getVertices(meshString: string): Vertex[] {
     const vertexRegEx = fromPattern(`vert ${num} \\( ${num} ${num} \\) ${num} ${num}`);
-    const toVertex = (x: RegExpExecArray) => {
+    const toVertex = (x: RegExpMatchArray) => {
         const startWeight = parseInt10(x[4]);
         const countWeight = parseInt10(x[5]);
         return {
@@ -68,7 +68,7 @@ function triangleNormals(vertices: Vertex[], weights: Weight[], joints: Joint[])
 
 function getTriangles(meshString: string, vertices: Vertex[], weights: Weight[], joints: Joint[]): Triangle[] {
     const triangleRegEx = fromPattern(`tri ${num} ${num} ${num} ${num}`);
-    const toTriangle = (x: RegExpExecArray): Triangle => {
+    const toTriangle = (x: RegExpMatchArray): Triangle => {
         const asInt = (i: number) => parseInt10(x[i]);
         const vertexIndices = [asInt(2), asInt(3), asInt(4)];
         const triangleVertices = vertexIndices.map(i => vertices[i]);
@@ -83,7 +83,7 @@ function getTriangles(meshString: string, vertices: Vertex[], weights: Weight[],
 
 function getWeights(meshString: string): Weight[] {
     const weightRegEx = fromPattern(`weight ${num} ${num} ${num} \\( ${num} ${num} ${num} \\)`);
-    const toWeight = (x: RegExpExecArray) => ({
+    const toWeight = (x: RegExpMatchArray) => ({
         index: parseInt10(x[1]),
         joint: parseInt10(x[2]),
         bias: parseFloat(x[3]),

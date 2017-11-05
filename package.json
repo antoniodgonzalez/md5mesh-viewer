@@ -14,14 +14,14 @@
   "license": "ISC",
   "devDependencies": {
     "@types/gl-matrix": "^2.3.0",
-    "@types/node": "^8.0.30",
-    "awesome-typescript-loader": "^3.2.3",
+    "@types/node": "^8.0.47",
+    "awesome-typescript-loader": "^3.3.0",
     "gl-matrix": "^2.4.0",
     "raw-loader": "^0.5.1",
-    "tslint": "^5.7.0",
-    "twgl.js": "^3.7.0",
-    "typescript": "^2.5.2",
-    "webpack": "^3.5.6",
-    "webpack-dev-server": "^2.7.1"
+    "tslint": "^5.8.0",
+    "twgl.js": "^4.0.0",
+    "typescript": "^2.6.1",
+    "webpack": "^3.8.1",
+    "webpack-dev-server": "^2.9.4"
   }
 }

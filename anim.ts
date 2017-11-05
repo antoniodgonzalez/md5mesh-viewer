@@ -32,8 +32,8 @@ const animateJoint = (joint: Joint, baseFrame: BaseFrame, hierarchy: Hierarchy, 
 export const getAnimatedJoints = (mesh: MD5Mesh, anim: MD5Anim, frameIndex: number): ReadonlyArray<Joint> =>
     mesh.joints
         .map((joint, i) => ({joint, hierarchy: anim.hierarchy[i], baseFrame: anim.baseFrame[i]}))
-        .reduce((animatedJoints, x) =>
-            [...animatedJoints,
+        .reduce<ReadonlyArray<Joint>>((animatedJoints, x) =>
+            animatedJoints.concat(
                 animateJoint(x.joint, x.baseFrame, x.hierarchy, anim.frames[frameIndex],
-                             animatedJoints[x.hierarchy.parent])]
+                             animatedJoints[x.hierarchy.parent]))
         , []);
