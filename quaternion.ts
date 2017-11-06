@@ -23,3 +23,6 @@ export const mul = (a: Quaternion, b: Quaternion): Quaternion =>
 
 export const normalize = (q: Quaternion): Quaternion =>
     toQuaternion(quat.normalize(quat.create(), toQuat(q)));
+
+export const slerp = (a: Quaternion, b: Quaternion, t: number) =>
+    toQuaternion(quat.slerp(quat.create(), toQuat(a), toQuat(b), t));

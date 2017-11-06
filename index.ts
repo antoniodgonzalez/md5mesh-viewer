@@ -17,7 +17,7 @@ import { getMD5Mesh } from "./md5meshParser";
 import { initSettingsUI, getSettings } from "./settingsUI";
 import * as input from "./input";
 import { getMD5Anim } from "./md5animParser";
-import { getAnimatedJoints } from "./anim";
+import { getAnimatedJointsInterpolated } from "./anim";
 import { MD5Mesh, Joint } from "./md5mesh";
 import { MD5Anim } from "./md5anim";
 import { getMeshVertices } from "./md5meshArrays";
@@ -190,18 +190,15 @@ function renderLight() {
     twgl.drawBufferInfo(gl, lightBufferInfo, gl.POINTS);
 }
 
-function animateJoints(md5mesh: MD5Mesh, md5anim: MD5Anim, animation: string, frame: number): ReadonlyArray<Joint> {
-    const joints = animation === "bindPose" ? md5mesh.joints :
-        getAnimatedJoints(md5Mesh, md5Anim, frame);
-
-    return joints;
-}
+const animateJoints = (md5mesh: MD5Mesh, md5anim: MD5Anim, animation: string, frame: number): ReadonlyArray<Joint> =>
+    animation === "bindPose" ? md5mesh.joints : getAnimatedJointsInterpolated(md5Anim, frame);
 
 const identity = mat4.identity(mat4.create());
 
 input.init();
 initSettingsUI(md5Mesh, md5Anim);
 
+let lastTime: number;
 let currentFrame = 0;
 
 const render: FrameRequestCallback = (time) => {
@@ -209,7 +206,10 @@ const render: FrameRequestCallback = (time) => {
     const angleY = Math.PI * 1.5;
     mat4.rotateY(matrices.u_worldMatrix, identity, angleX);
     mat4.rotateX(matrices.u_worldMatrix, matrices.u_worldMatrix, angleY);
-    currentFrame = (currentFrame +  24 / 60) % md5Anim.frames.length;
+
+    const deltaTime = lastTime ? (time - lastTime) / 1000 : 0;
+    lastTime = time;
+    currentFrame = (currentFrame + md5Anim.frameRate * deltaTime) % md5Anim.frames.length;
 
     gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -217,7 +217,7 @@ const render: FrameRequestCallback = (time) => {
 
     renderLight();
 
-    const frame = settings.animation === "animated" ? Math.floor(currentFrame) : settings.animationFrame;
+    const frame = settings.animation === "animated" ? currentFrame : settings.animationFrame;
     const joints = animateJoints(md5Mesh, md5Anim, settings.animation, frame);
 
     if (settings.skeleton) {

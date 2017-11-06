@@ -49,6 +49,7 @@ const getFrames = (md5animSource: string): ReadonlyArray<Frame> =>
         });
 
 export const getMD5Anim = (md5animSource: string): MD5Anim => ({
+    frameRate: 24,  // TODO: Read from source
     hierarchy: getHierarchy(md5animSource),
     baseFrame: getBaseFrame(md5animSource),
     bounds: getBounds(md5animSource),

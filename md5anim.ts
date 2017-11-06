@@ -23,6 +23,7 @@ export interface Frame {
 }
 
 export interface MD5Anim {
+    frameRate: number;
     hierarchy: ReadonlyArray<Hierarchy>;
     bounds: ReadonlyArray<Bounds>;
     baseFrame: ReadonlyArray<BaseFrame>;
