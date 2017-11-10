@@ -1,5 +1,5 @@
 import * as twgl from "twgl.js";
-import { glMatrix, mat4 } from "gl-matrix";
+import { m4 } from "twgl.js";
 import {
     RenderingMesh,
     MeshTextures,
@@ -67,13 +67,13 @@ const lightBufferInfo = twgl.createBufferInfoFromArrays(gl, { position: [0, 0, 0
 const cameraPosition = [0, 100, 100];
 const center = [0, 40, 0];
 const matrices = {
-    u_worldMatrix: mat4.identity(mat4.create()),
-    u_viewMatrix: mat4.lookAt(mat4.create(), cameraPosition, center, [0, 1, 0]),
-    u_projMatrix: mat4.create()
+    u_worldMatrix: m4.identity(),
+    u_viewMatrix: m4.inverse(m4.lookAt(cameraPosition, center, [0, 1, 0])),
+    u_projMatrix: []
 };
 
 function setProjectionMatrix(width: number, height: number) {
-    mat4.perspective(matrices.u_projMatrix, glMatrix.toRadian(45), width / height, 0.1, 1000);
+    m4.perspective(Math.PI / 4, width / height, 0.1, 1000, matrices.u_projMatrix);
 }
 
 setProjectionMatrix(canvas.width, canvas.height);
@@ -177,12 +177,11 @@ function renderMesh(programInfo: twgl.ProgramInfo, bufferInfo: twgl.BufferInfo, 
 
 function renderLight() {
     gl.useProgram(solidProgramInfo.program);
-    const worldMatrix = mat4.translate(mat4.create(), mat4.identity(mat4.create()), input.getLightPosition());
     twgl.setUniforms(solidProgramInfo, {
-        u_worldMatrix: worldMatrix,
+        u_worldMatrix: m4.translate(m4.identity(), input.getLightPosition()),
         u_viewMatrix: matrices.u_viewMatrix,
         u_projMatrix: matrices.u_projMatrix,
-        u_color: [1, 0, 0],
+        u_color: [1, 1, 1],
         u_pointSize: 10
     });
 
@@ -193,8 +192,6 @@ function renderLight() {
 const animateJoints = (md5mesh: MD5Mesh, md5anim: MD5Anim, animation: string, frame: number): ReadonlyArray<Joint> =>
     animation === "bindPose" ? md5mesh.joints : getAnimatedJointsInterpolated(md5Anim, frame);
 
-const identity = mat4.identity(mat4.create());
-
 input.init();
 initSettingsUI(md5Mesh, md5Anim);
 
@@ -204,8 +201,8 @@ let currentFrame = 0;
 const render: FrameRequestCallback = (time) => {
     const angleX = input.update();
     const angleY = Math.PI * 1.5;
-    mat4.rotateY(matrices.u_worldMatrix, identity, angleX);
-    mat4.rotateX(matrices.u_worldMatrix, matrices.u_worldMatrix, angleY);
+    m4.rotateY(m4.identity(), angleX, matrices.u_worldMatrix);
+    m4.rotateX(matrices.u_worldMatrix, angleY, matrices.u_worldMatrix);
 
     const deltaTime = lastTime ? (time - lastTime) / 1000 : 0;
     lastTime = time;
