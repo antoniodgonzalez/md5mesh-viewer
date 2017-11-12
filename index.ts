@@ -22,7 +22,7 @@ import {
 } from "./anim";
 import { MD5Mesh, Joint, Mesh } from "./md5mesh";
 import { MD5Anim } from "./md5anim";
-import { getMeshVertices, getMeshVertexNormals } from "./md5meshArrays";
+import { getMeshVertices, getMeshVertexNormals, getVertexTriangleIndices, getJointsVertices } from "./md5meshArrays";
 import { Vector } from "./vector";
 
 const canvas = document.getElementById("glcanvas") as HTMLCanvasElement;
@@ -45,7 +45,11 @@ const md5Mesh = getMD5Mesh(md5meshSource);
 const md5animSource = require("./models/idle1.md5anim") as string;
 const md5Anim = getMD5Anim(md5animSource);
 
+const renderingJoints = getRenderingJoints(gl, md5Mesh.joints);
+
 const renderingMeshes = getRenderingMeshes(gl, md5Mesh);
+
+const vertexTriangleIndices = md5Mesh.meshes.map(getVertexTriangleIndices);
 
 const createProgramInfo = (name: string) => twgl.createProgramInfo(gl, [
     require(`./shaders/${name}-vertex.glslx`) as string,
@@ -82,8 +86,6 @@ window.onresize = () => {
 };
 
 function renderJoints(joints: ReadonlyArray<Joint>) {
-    const renderingJoints = getRenderingJoints(gl, joints);
-
     gl.useProgram(solidProgramInfo.program);
     twgl.setUniforms(solidProgramInfo, {
         ...matrices,
@@ -216,6 +218,7 @@ const render: FrameRequestCallback = (time) => {
     const joints = animateJoints(md5Mesh, md5Anim, settings.animation, frame);
 
     if (settings.skeleton) {
+        twgl.setAttribInfoBufferFromArray(gl, renderingJoints.bufferInfo.attribs.position, getJointsVertices(joints));
         renderJoints(joints);
     }
 
@@ -233,7 +236,7 @@ const render: FrameRequestCallback = (time) => {
                 getMeshVertices(positions));
 
             const triangleNormals = getTriangleNormals(mesh, positions);
-            const vertexNormals = getVertexNormals(mesh, triangleNormals);
+            const vertexNormals = getVertexNormals(mesh, triangleNormals, vertexTriangleIndices[i]);
 
             twgl.setAttribInfoBufferFromArray(gl, renderingMesh.bufferInfo.attribs.normal,
                 getMeshVertexNormals(mesh, vertexNormals));

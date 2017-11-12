@@ -10,7 +10,8 @@ import {
     getMeshVertexNormals,
     getMeshTrianglesPositions,
     getMeshTrianglesNormals,
-    getMeshVertexNormalsDebug
+    getMeshVertexNormalsDebug,
+    getVertexTriangleIndices
 } from "./md5meshArrays";
 import { getAnimatedPositions, Normal, getVertexNormals, getTriangleNormals } from "./anim";
 
@@ -82,7 +83,7 @@ export function getRenderingMeshes(gl: WebGLRenderingContext, md5Mesh: MD5Mesh):
     return md5Mesh.meshes.map(mesh => {
         const positions = getAnimatedPositions(mesh, md5Mesh.joints);
         const triangleNormals = getTriangleNormals(mesh, positions);
-        const vertexNormals = getVertexNormals(mesh, triangleNormals);
+        const vertexNormals = getVertexNormals(mesh, triangleNormals, getVertexTriangleIndices(mesh));
         const arrays = {
             position: getMeshVertices(positions),
             normal: getMeshVertexNormals(mesh, vertexNormals),

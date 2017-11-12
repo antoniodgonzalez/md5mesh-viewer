@@ -1,5 +1,5 @@
-import { MD5Mesh, Joint, Triangle, Mesh } from "./md5mesh";
-import { add, div, Vector, flatten } from "./vector";
+import { MD5Mesh, Joint, Triangle, Mesh, Vertex } from "./md5mesh";
+import { add, div, Vector, flatten, sum } from "./vector";
 import { Normal } from "./anim";
 
 export function getJointsVertices(joints: ReadonlyArray<Joint>): ReadonlyArray<number> {
@@ -30,7 +30,6 @@ export const getMeshTrianglesNormals = (mesh: Mesh,
     return flatten(mesh.triangles.map(triangleVertexNormals));
 };
 
-const sum = (values: Vector[]): Vector => values.reduce(add);
 const midPosition = (values: Vector[]) => div(sum(values), values.length);
 
 const getTriangleMidPosition = (positions: ReadonlyArray<Vector>) => (triangle: Triangle) =>
@@ -70,3 +69,9 @@ export function getMeshVertexNormalsDebug(mesh: Mesh,
 export const getMeshVertexNormals = (mesh: Mesh, vertexNormals: ReadonlyArray<Normal>): ReadonlyArray<number> => {
     return flatten(vertexNormals.map(n => n.normal));
 };
+
+const singleVertexTriangleIndices = (triangles: ReadonlyArray<Triangle>, vertex: Vertex): ReadonlyArray<number> =>
+    triangles.filter(t => t.indices.includes(vertex.index)).map(t => t.index);
+
+export const getVertexTriangleIndices = (mesh: Mesh): ReadonlyArray<ReadonlyArray<number>> =>
+    mesh.vertices.map(v => singleVertexTriangleIndices(mesh.triangles, v));

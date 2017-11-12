@@ -1,8 +1,8 @@
-import { Joint, Mesh, Weight, Vertex, Triangle } from "./md5mesh";
+import { Joint, Mesh, Weight, Vertex } from "./md5mesh";
 import { BaseFrame, Hierarchy, Frame, MD5Anim } from "./md5anim";
 import { createUnitQuaternion, rotate } from "./quaternion";
 import { normalize as qnormalize, mul as qmul, slerp } from "./quaternion";
-import { add, mul, sub, Vector, cross, normalize } from "./vector";
+import { add, mul, sub, Vector, cross, normalize, sum } from "./vector";
 
 // tslint:disable:no-bitwise
 
@@ -61,20 +61,19 @@ export const getAnimatedJointsInterpolated = (anim: MD5Anim, frameIndex: number)
             });
         }, []);
 
-const getVertexPosition = (weights: ReadonlyArray<Weight>, joints: ReadonlyArray<Joint>) =>
-                          (vertex: Vertex): Vector => {
+const getVertexPosition = (weights: ReadonlyArray<Weight>, joints: ReadonlyArray<Joint>, vertex: Vertex): Vector => {
     const calculateWeightedPosition = (weight: Weight): Vector => {
         const joint = joints[weight.joint];
         const rotated = rotate(joint.orientation, weight.position);
         return mul(add(joint.position, rotated), weight.bias);
     };
 
-    return weights.slice(vertex.startWeight, vertex.startWeight + vertex.countWeight)
-        .map(calculateWeightedPosition).reduce(add);
+    return sum(weights.slice(vertex.startWeight, vertex.startWeight + vertex.countWeight)
+                .map(calculateWeightedPosition));
 };
 
 export const getAnimatedPositions = (mesh: Mesh, joints: ReadonlyArray<Joint>): ReadonlyArray<Vector> =>
-    mesh.vertices.map(getVertexPosition(mesh.weights, joints));
+    mesh.vertices.map(v => getVertexPosition(mesh.weights, joints, v));
 
 export interface Normal {
     normal: Vector;
@@ -83,7 +82,7 @@ export interface Normal {
 }
 
 // ref: http://www.terathon.com/code/tangent.html
-const triangleNormals = (positions: ReadonlyArray<Vector>, texCoords: ReadonlyArray<Vector>): Normal => {
+const getSingleTriangleNormals = (positions: ReadonlyArray<Vector>, texCoords: ReadonlyArray<Vector>): Normal => {
     const deltaPos1 = sub(positions[2], positions[0]);
     const deltaPos2 = sub(positions[1], positions[0]);
     const normal = normalize(cross(deltaPos1, deltaPos2));
@@ -103,22 +102,21 @@ const triangleNormals = (positions: ReadonlyArray<Vector>, texCoords: ReadonlyAr
 };
 
 export const getTriangleNormals = (mesh: Mesh, positions: ReadonlyArray<Vector>): ReadonlyArray<Normal> =>
-    mesh.triangles.map(({indices}) => triangleNormals(
+    mesh.triangles.map(({indices}) => getSingleTriangleNormals(
         indices.map(i => positions[i]),
         indices.map(i => mesh.vertices[i].uv)
     ));
 
-const vertexNormal = (triangles: ReadonlyArray<Triangle>, normals: ReadonlyArray<Normal>) =>
-                     (vertex: Vertex): Normal => {
-    const vertexIsIncluded = ({indices}: Triangle) => indices.includes(vertex.index);
-    const triangleVertices = triangles.filter(vertexIsIncluded).map(x => normals[x.index]);
-
+const vertexNormal = (normals: ReadonlyArray<Normal>, indices: ReadonlyArray<number>): Normal => {
+    const triangleNormals = indices.map(i => normals[i]);
     return {
-        normal: normalize(triangleVertices.map(x => x.normal).reduce(add)),
-        tangent: normalize(triangleVertices.map(x => x.tangent).reduce(add)),
-        bitangent: normalize(triangleVertices.map(x => x.bitangent).reduce(add))
+        normal: normalize(sum(triangleNormals.map(x => x.normal))),
+        tangent: normalize(sum(triangleNormals.map(x => x.tangent))),
+        bitangent: normalize(sum(triangleNormals.map(x => x.bitangent)))
     };
 };
 
-export const getVertexNormals = (mesh: Mesh, triangleNormals2: ReadonlyArray<Normal>): ReadonlyArray<Normal> =>
-    mesh.vertices.map(vertexNormal(mesh.triangles, triangleNormals2));
+export const getVertexNormals =
+    (mesh: Mesh, triangleNormals: ReadonlyArray<Normal>,
+     vertexTriangleIndices: ReadonlyArray<ReadonlyArray<number>>): ReadonlyArray<Normal> =>
+        mesh.vertices.map((v, i) => vertexNormal(triangleNormals, vertexTriangleIndices[i]));
