@@ -20,4 +20,4 @@ export const normalize = (a: Vector): Vector => {
 };
 
 export const flatten = (array: ReadonlyArray<Vector>) =>
-    array.reduce((a: ReadonlyArray<number>, b: Vector) => [...a, ...b], []);
+    array.reduce((a: ReadonlyArray<number>, b: Vector) => a.concat(b), []);

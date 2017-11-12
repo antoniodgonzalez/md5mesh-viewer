@@ -18,9 +18,6 @@ export interface Vertex {
 export interface Triangle {
     index: number;
     indices: number[];
-    normal: Vector;
-    tangent: Vector;
-    bitangent: Vector;
 }
 
 export interface Weight {

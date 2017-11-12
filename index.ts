@@ -7,20 +7,23 @@ import {
     getRenderingJoints,
     getRenderingTriangleNormals,
     getRenderingVertexNormals,
-    getRenderingMeshTriangles,
-    getRenderingTriangleTangents,
-    getRenderingTriangleBitangents,
-    getRenderingVertexTangents,
-    getRenderingVertexBitangents
+    getRenderingMeshTriangles
 } from "./rendering";
 import { getMD5Mesh } from "./md5meshParser";
 import { initSettingsUI, getSettings } from "./settingsUI";
 import * as input from "./input";
 import { getMD5Anim } from "./md5animParser";
-import { getAnimatedJointsInterpolated } from "./anim";
-import { MD5Mesh, Joint } from "./md5mesh";
+import {
+    Normal,
+    getAnimatedPositions,
+    getAnimatedJointsInterpolated,
+    getTriangleNormals,
+    getVertexNormals
+} from "./anim";
+import { MD5Mesh, Joint, Mesh } from "./md5mesh";
 import { MD5Anim } from "./md5anim";
-import { getMeshVertices } from "./md5meshArrays";
+import { getMeshVertices, getMeshVertexNormals } from "./md5meshArrays";
+import { Vector } from "./vector";
 
 const canvas = document.getElementById("glcanvas") as HTMLCanvasElement;
 twgl.resizeCanvasToDisplaySize(canvas);
@@ -42,14 +45,7 @@ const md5Mesh = getMD5Mesh(md5meshSource);
 const md5animSource = require("./models/idle1.md5anim") as string;
 const md5Anim = getMD5Anim(md5animSource);
 
-const triangleNormals = getRenderingTriangleNormals(gl, md5Mesh);
-const triangleTangents = getRenderingTriangleTangents(gl, md5Mesh);
-const triangleBitangents = getRenderingTriangleBitangents(gl, md5Mesh);
-const vertexNormals = getRenderingVertexNormals(gl, md5Mesh);
-const vertexTangents = getRenderingVertexTangents(gl, md5Mesh);
-const vertexBitangents = getRenderingVertexBitangents(gl, md5Mesh);
-const meshTriangles = getRenderingMeshTriangles(gl, md5Mesh);
-const meshes = getRenderingMeshes(gl, md5Mesh);
+const renderingMeshes = getRenderingMeshes(gl, md5Mesh);
 
 const createProgramInfo = (name: string) => twgl.createProgramInfo(gl, [
     require(`./shaders/${name}-vertex.glslx`) as string,
@@ -104,22 +100,24 @@ const renderVectors = (renderingMesh: RenderingMesh, color: number[]) => {
     gl.drawArrays(gl.LINES, 0, renderingMesh.bufferInfo.numElements);
 };
 
-function renderTriangleNormals(i: number) {
+function renderTriangleNormals(mesh: Mesh, positions: ReadonlyArray<Vector>, triangleNormals: ReadonlyArray<Normal>) {
     gl.useProgram(solidProgramInfo.program);
     twgl.setUniforms(solidProgramInfo, matrices);
 
-    renderVectors(triangleNormals[i], [0, 0, 1]);
-    renderVectors(triangleTangents[i], [0, 1, 0]);
-    renderVectors(triangleBitangents[i], [1, 0, 0]);
+    const normals = getRenderingTriangleNormals(gl, mesh, positions, triangleNormals);
+    renderVectors(normals.normals, [0, 0, 1]);
+    renderVectors(normals.tangents, [0, 1, 0]);
+    renderVectors(normals.bitangents, [1, 0, 0]);
 }
 
-function renderVertexNormals(i: number) {
+function renderVertexNormals(mesh: Mesh, positions: ReadonlyArray<Vector>, vertexNormals: ReadonlyArray<Normal>) {
     gl.useProgram(solidProgramInfo.program);
     twgl.setUniforms(solidProgramInfo, matrices);
 
-    renderVectors(vertexNormals[i], [0, 0, 1]);
-    renderVectors(vertexTangents[i], [0, 1, 0]);
-    renderVectors(vertexBitangents[i], [1, 0, 0]);
+    const normals = getRenderingVertexNormals(gl, mesh, positions, vertexNormals);
+    renderVectors(normals.normals, [0, 0, 1]);
+    renderVectors(normals.tangents, [0, 1, 0]);
+    renderVectors(normals.bitangents, [1, 0, 0]);
 }
 
 function renderVertices(bufferInfo: twgl.BufferInfo) {
@@ -221,42 +219,53 @@ const render: FrameRequestCallback = (time) => {
         renderJoints(joints);
     }
 
-    meshes
-        .forEach((mesh, i) => {
+    renderingMeshes
+        .forEach((renderingMesh, i) => {
             const enabled = settings.meshes[i];
             if (!enabled) {
                 return;
             }
 
-            const position = getMeshVertices(md5Mesh, md5Mesh.meshes[i], joints);
-            twgl.setAttribInfoBufferFromArray(gl, mesh.bufferInfo.attribs.position, position);
+            const mesh = md5Mesh.meshes[i];
+
+            const positions = getAnimatedPositions(mesh, joints);
+            twgl.setAttribInfoBufferFromArray(gl, renderingMesh.bufferInfo.attribs.position,
+                getMeshVertices(positions));
+
+            const triangleNormals = getTriangleNormals(mesh, positions);
+            const vertexNormals = getVertexNormals(mesh, triangleNormals);
+
+            twgl.setAttribInfoBufferFromArray(gl, renderingMesh.bufferInfo.attribs.normal,
+                getMeshVertexNormals(mesh, vertexNormals));
 
             if (settings.vertices) {
-                renderVertices(mesh.bufferInfo);
+                renderVertices(renderingMesh.bufferInfo);
             }
 
             if (settings.triangleNormals) {
-                renderTriangleNormals(i);
+                renderTriangleNormals(mesh, positions, triangleNormals);
             }
 
             if (settings.vertexNormals) {
-                renderVertexNormals(i);
+                renderVertexNormals(mesh, positions, vertexNormals);
             }
 
             if (settings.flatGeometry) {
-                renderFlatTriangles(meshTriangles[i].bufferInfo);
+                const meshTriangles = getRenderingMeshTriangles(gl, mesh, positions, triangleNormals);
+                renderFlatTriangles(meshTriangles.bufferInfo);
             }
 
             if (settings.shadedGeometry) {
-                renderMesh(shadedProgramInfo, mesh.bufferInfo, mesh.textures);
+                renderMesh(shadedProgramInfo, renderingMesh.bufferInfo, renderingMesh.textures);
             }
 
             if (settings.texture) {
-                renderTexture(textureProgramInfo, mesh.bufferInfo, mesh.textures[settings.textureType]);
+                const texture = renderingMesh.textures[settings.textureType];
+                renderTexture(textureProgramInfo, renderingMesh.bufferInfo, texture);
             }
 
             if (settings.full) {
-                renderMesh(mainProgramInfo, mesh.bufferInfo, mesh.textures);
+                renderMesh(mainProgramInfo, renderingMesh.bufferInfo, renderingMesh.textures);
             }
         });
 
