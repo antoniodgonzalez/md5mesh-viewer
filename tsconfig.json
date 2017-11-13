@@ -10,6 +10,6 @@
         "noUnusedLocals": true
     },
     "typeAcquisition": {
-        "enable": true
+        "enable": false
     }
 }
