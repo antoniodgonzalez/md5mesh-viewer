@@ -28,7 +28,7 @@ import { Vector } from "./vector";
 const canvas = document.getElementById("glcanvas") as HTMLCanvasElement;
 twgl.resizeCanvasToDisplaySize(canvas);
 
-const gl = canvas.getContext("webgl") as WebGLRenderingContext;
+const gl = (canvas.getContext("webgl") || canvas.getContext("experimental-webgl")) as WebGLRenderingContext;
 if (!gl) {
     throw new Error("WebGL not supported");
 }
