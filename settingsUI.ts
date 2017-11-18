@@ -1,7 +1,7 @@
 import { Mesh, MD5Mesh } from "./md5mesh";
 import { MD5Anim } from "./md5anim";
 
-interface Settings {
+export interface Settings {
     skeleton: boolean;
     vertices: boolean;
     triangleNormals: boolean;
@@ -14,6 +14,9 @@ interface Settings {
     full: boolean;
     animation: string; // "bindPose" | "animated" | "frame";
     animationFrame: number;
+    lightingAmbient: number;
+    lightingDiffuse: number;
+    lightingSpecular: number;
 }
 
 const skeletonCheck = document.getElementById("skeleton") as HTMLInputElement;
@@ -31,6 +34,13 @@ const animationBindPose = document.getElementById("animationBindPose") as HTMLIn
 const animationAnimated = document.getElementById("animationAnimated") as HTMLInputElement;
 const animationFrame = document.getElementById("animationFrame") as HTMLInputElement;
 const animationFrameInput = document.getElementById("frame") as HTMLInputElement;
+const lightingAmbientInput = document.getElementById("lightingAmbient") as HTMLInputElement;
+const lightingDiffuseInput = document.getElementById("lightingDiffuse") as HTMLInputElement;
+const lightingSpecularInput = document.getElementById("lightingSpecular") as HTMLInputElement;
+
+lightingAmbientInput.onmousemove = e => e.stopPropagation();
+lightingDiffuseInput.onmousemove = e => e.stopPropagation();
+lightingSpecularInput.onmousemove = e => e.stopPropagation();
 
 function addMeshCheckbox(mesh: Mesh, i: number) {
     const div = document.createElement("div");
@@ -68,5 +78,8 @@ export const getSettings = (): Settings => ({
     full: fullCheck.checked,
     meshes: meshCheckboxes.map(ch => ch.checked),
     animation: getAnimation(),
-    animationFrame: parseInt(animationFrameInput.value, 10)
+    animationFrame: parseInt(animationFrameInput.value, 10),
+    lightingAmbient: parseFloat(lightingAmbientInput.value),
+    lightingDiffuse: parseFloat(lightingDiffuseInput.value),
+    lightingSpecular: parseFloat(lightingSpecularInput.value)
 });

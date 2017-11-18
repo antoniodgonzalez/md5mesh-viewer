@@ -10,7 +10,7 @@ import {
     getRenderingMeshTriangles
 } from "./rendering";
 import { getMD5Mesh } from "./md5meshParser";
-import { initSettingsUI, getSettings } from "./settingsUI";
+import { initSettingsUI, getSettings, Settings } from "./settingsUI";
 import * as input from "./input";
 import { getMD5Anim } from "./md5animParser";
 import {
@@ -22,7 +22,8 @@ import {
 } from "./anim";
 import { MD5Mesh, Joint, Mesh } from "./md5mesh";
 import { MD5Anim } from "./md5anim";
-import { getMeshVertices, getMeshVertexNormals, getVertexTriangleIndices, getJointsVertices } from "./md5meshArrays";
+import { getMeshVertices, getMeshVertexNormals, getMeshVertexTangents, getMeshVertexBitangents,
+    getVertexTriangleIndices, getJointsVertices } from "./md5meshArrays";
 import { Vector } from "./vector";
 
 const canvas = document.getElementById("glcanvas") as HTMLCanvasElement;
@@ -134,12 +135,14 @@ function renderVertices(bufferInfo: twgl.BufferInfo) {
     twgl.drawBufferInfo(gl, bufferInfo, gl.POINTS);
 }
 
-function renderFlatTriangles(bufferInfo: twgl.BufferInfo) {
+function renderFlatTriangles(bufferInfo: twgl.BufferInfo, settings: Settings) {
     gl.useProgram(flatProgramInfo.program);
     twgl.setUniforms(flatProgramInfo, {
         ...matrices,
         u_lightPosition: input.getLightPosition(),
-        u_color: [1, 1, 1]
+        u_color: [1, 1, 1],
+        u_ambientIntensity: settings.lightingAmbient,
+        u_diffuseIntensity: settings.lightingDiffuse
     });
 
     twgl.setBuffersAndAttributes(gl, flatProgramInfo, bufferInfo);
@@ -159,7 +162,8 @@ function renderTexture(programInfo: twgl.ProgramInfo, bufferInfo: twgl.BufferInf
     gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0);
 }
 
-function renderMesh(programInfo: twgl.ProgramInfo, bufferInfo: twgl.BufferInfo, textures: MeshTextures) {
+function renderMesh(programInfo: twgl.ProgramInfo, bufferInfo: twgl.BufferInfo, textures: MeshTextures,
+                    settings: Settings) {
     gl.useProgram(programInfo.program);
     twgl.setUniforms(programInfo, {
         ...matrices,
@@ -168,6 +172,10 @@ function renderMesh(programInfo: twgl.ProgramInfo, bufferInfo: twgl.BufferInfo, 
         u_sampler_height: textures.h,
         u_sampler_diffuse: textures.d,
         u_sampler_specular: textures.s,
+        u_sampler_normal: textures.local,
+        u_ambientIntensity: settings.lightingAmbient,
+        u_diffuseIntensity: settings.lightingDiffuse,
+        u_specularIntensity: settings.lightingSpecular,
     });
 
     twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
@@ -240,6 +248,10 @@ const render: FrameRequestCallback = (time) => {
 
             twgl.setAttribInfoBufferFromArray(gl, renderingMesh.bufferInfo.attribs.normal,
                 getMeshVertexNormals(mesh, vertexNormals));
+            twgl.setAttribInfoBufferFromArray(gl, renderingMesh.bufferInfo.attribs.tangent,
+                getMeshVertexTangents(mesh, vertexNormals));
+            twgl.setAttribInfoBufferFromArray(gl, renderingMesh.bufferInfo.attribs.bitangent,
+                getMeshVertexBitangents(mesh, vertexNormals));
 
             if (settings.vertices) {
                 renderVertices(renderingMesh.bufferInfo);
@@ -255,11 +267,11 @@ const render: FrameRequestCallback = (time) => {
 
             if (settings.flatGeometry) {
                 const meshTriangles = getRenderingMeshTriangles(gl, mesh, positions, triangleNormals);
-                renderFlatTriangles(meshTriangles.bufferInfo);
+                renderFlatTriangles(meshTriangles.bufferInfo, settings);
             }
 
             if (settings.shadedGeometry) {
-                renderMesh(shadedProgramInfo, renderingMesh.bufferInfo, renderingMesh.textures);
+                renderMesh(shadedProgramInfo, renderingMesh.bufferInfo, renderingMesh.textures, settings);
             }
 
             if (settings.texture) {
@@ -268,7 +280,7 @@ const render: FrameRequestCallback = (time) => {
             }
 
             if (settings.full) {
-                renderMesh(mainProgramInfo, renderingMesh.bufferInfo, renderingMesh.textures);
+                renderMesh(mainProgramInfo, renderingMesh.bufferInfo, renderingMesh.textures, settings);
             }
         });
 

@@ -66,9 +66,14 @@ export function getMeshVertexNormalsDebug(mesh: Mesh,
     };
 }
 
-export const getMeshVertexNormals = (mesh: Mesh, vertexNormals: ReadonlyArray<Normal>): ReadonlyArray<number> => {
-    return flatten(vertexNormals.map(n => n.normal));
-};
+export const getMeshVertexNormals = (mesh: Mesh, vertexNormals: ReadonlyArray<Normal>): ReadonlyArray<number> =>
+    flatten(vertexNormals.map(n => n.normal));
+
+export const getMeshVertexTangents = (mesh: Mesh, vertexNormals: ReadonlyArray<Normal>): ReadonlyArray<number> =>
+    flatten(vertexNormals.map(n => n.tangent));
+
+export const getMeshVertexBitangents = (mesh: Mesh, vertexNormals: ReadonlyArray<Normal>): ReadonlyArray<number> =>
+    flatten(vertexNormals.map(n => n.bitangent));
 
 const singleVertexTriangleIndices = (triangles: ReadonlyArray<Triangle>, vertex: Vertex): ReadonlyArray<number> =>
     triangles.filter(t => t.indices.includes(vertex.index)).map(t => t.index);

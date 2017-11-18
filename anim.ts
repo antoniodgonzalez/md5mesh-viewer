@@ -81,18 +81,20 @@ export interface Normal {
     bitangent: Vector;
 }
 
+const sub2 = (a: ReadonlyArray<number>, b: ReadonlyArray<number>) => [ a[0] - b[0], a[1] - b[1] ];
+
 // ref: http://www.terathon.com/code/tangent.html
 const getSingleTriangleNormals = (positions: ReadonlyArray<Vector>, texCoords: ReadonlyArray<Vector>): Normal => {
     const deltaPos1 = sub(positions[2], positions[0]);
     const deltaPos2 = sub(positions[1], positions[0]);
     const normal = normalize(cross(deltaPos1, deltaPos2));
 
-    const deltaUV1 = sub(texCoords[2], texCoords[0]);
-    const deltaUV2 = sub(texCoords[1], texCoords[0]);
+    const deltaUV1 = sub2(texCoords[2], texCoords[0]);
+    const deltaUV2 = sub2(texCoords[1], texCoords[0]);
 
     const r = 1 / (deltaUV1[0] * deltaUV2[1] - deltaUV1[1] * deltaUV2[0]);
     const tangent = normalize(mul(sub(mul(deltaPos2, deltaUV1[0]), mul(deltaPos1, deltaUV2[0])), r));
-    const bitangent = normalize(mul(sub(mul(deltaPos1, deltaUV2[1]), mul(deltaPos2, deltaUV1[1])), r));
+    const bitangent = cross(normal, tangent);
 
     return {
         normal,
@@ -109,10 +111,12 @@ export const getTriangleNormals = (mesh: Mesh, positions: ReadonlyArray<Vector>)
 
 const vertexNormal = (normals: ReadonlyArray<Normal>, indices: ReadonlyArray<number>): Normal => {
     const triangleNormals = indices.map(i => normals[i]);
+    const normal = normalize(sum(triangleNormals.map(x => x.normal)));
+    const tangent = normalize(sum(triangleNormals.map(x => x.tangent)));
     return {
-        normal: normalize(sum(triangleNormals.map(x => x.normal))),
-        tangent: normalize(sum(triangleNormals.map(x => x.tangent))),
-        bitangent: normalize(sum(triangleNormals.map(x => x.bitangent)))
+        normal,
+        tangent,
+        bitangent: cross(normal, tangent)
     };
 };
 

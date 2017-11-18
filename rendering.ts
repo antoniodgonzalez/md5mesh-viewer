@@ -8,6 +8,8 @@ import {
     getJointsVertices,
     getMeshTriangleNormals,
     getMeshVertexNormals,
+    getMeshVertexTangents,
+    getMeshVertexBitangents,
     getMeshTrianglesPositions,
     getMeshTrianglesNormals,
     getMeshVertexNormalsDebug,
@@ -87,6 +89,8 @@ export function getRenderingMeshes(gl: WebGLRenderingContext, md5Mesh: MD5Mesh):
         const arrays = {
             position: getMeshVertices(positions),
             normal: getMeshVertexNormals(mesh, vertexNormals),
+            tangent: getMeshVertexTangents(mesh, vertexNormals),
+            bitangent: getMeshVertexBitangents(mesh, vertexNormals),
             texCoord: getMeshTexCoords(md5Mesh, mesh),
             indices: getMeshTriangles(md5Mesh, mesh)
         };
